@@ -1,0 +1,50 @@
+#!name=我的自定义合并规则
+#!desc=包含本地内网、GEOIP国内直连、Sub-Store、Speedtest、农行屏蔽及苹果OTA控制规则
+
+[Rule]
+# ===== 1. 核心本地/审计与阻断（高优先级） =====
+DOMAIN,sub-store.box,DIRECT
+IP-CIDR,127.0.0.1/32,DIRECT
+DOMAIN,msmp.abchina.com.cn,REJECT
+
+# ===== 2. 苹果系统更新与诊断控制（可根据需求修改 REJECT） =====
+# 如果需要正常更新系统，请将下方的 REJECT 改为 DIRECT 或你的代理策略名
+DOMAIN,gdmf.apple.com,REJECT
+DOMAIN,mesu.apple.com,REJECT
+DOMAIN,updates-http.cdn-apple.com,REJECT
+DOMAIN,xp.apple.com,REJECT
+
+# ===== 3. IPv4 保留 / 内网 / 特殊地址直连 =====
+IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
+IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+IP-CIDR,192.0.0.0/24,DIRECT,no-resolve
+IP-CIDR,192.0.2.0/24,DIRECT,no-resolve
+IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
+IP-CIDR,198.51.100.0/24,DIRECT,no-resolve
+IP-CIDR,203.0.113.0/24,DIRECT,no-resolve
+IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
+IP-CIDR,255.255.255.255/32,DIRECT,no-resolve
+IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+
+# ===== 4. IPv6 本地 / 保留地址直连 =====
+IP-CIDR6,::1/128,DIRECT,no-resolve
+IP-CIDR6,fc00::/7,DIRECT,no-resolve
+IP-CIDR6,fe80::/10,DIRECT,no-resolve
+IP-CIDR6,ff00::/8,DIRECT,no-resolve
+
+# ===== 5. 国内域名与局域网解析 =====
+DOMAIN-SUFFIX,local,DIRECT
+DOMAIN-SUFFIX,lan,DIRECT
+DOMAIN-SUFFIX,home.arpa,DIRECT
+DOMAIN-SUFFIX,cn,DIRECT
+DOMAIN-SUFFIX,speedtest.cn,DIRECT
+
+# ===== 6. 特定域名走代理 =====
+DOMAIN,js.appds.vip,美国节点
+
+# ===== 7. 兜底国内 IP 直连 =====
+GEOIP,CN,DIRECT,no-resolve
