@@ -1,0 +1,135 @@
+Name: ' iRingo: 🌤 WeatherKit'
+description: |-
+  iOS 18 & macOS 15 & watchOS 11
+  1.解锁全部天气功能
+  2.替换空气质量数据
+  3.添加下一小时降水数据
+  4.添加天气数据
+compat_arguments:
+  Weather.Provider: ColorfulClouds
+  NextHour.Provider: ColorfulClouds
+  AirQuality.Calculate.Algorithm: EU_EAQI
+  API.ColorfulClouds.Token: ''
+  API.QWeather.Host: devapi.qweather.com
+  API.QWeather.Token: ''
+  API.WAQI.Token: ''
+  Storage: Argument
+  LogLevel: WARN
+compat_arguments_schema:
+  Weather.Provider:
+    name: '[天气] 数据源'
+    description: 使用选定的数据源替换天气数据。
+    default_value: ColorfulClouds
+    options:
+    - ColorfulClouds
+    - WeatherKit
+    - QWeather
+  NextHour.Provider:
+    name: '[未来一小时降水强度] 数据源'
+    description: 使用选定的数据源填充未来一小时降水强度的数据。
+    default_value: ColorfulClouds
+    options:
+    - ColorfulClouds
+    - WeatherKit
+    - QWeather
+  AirQuality.Calculate.Algorithm:
+    name: '[iRingo内置算法] 算法'
+    description: 使用内置算法，通过污染物数据本地计算空气指数。InstantCast源自于WAQI，美标版本使用了WAQI的臭氧标准。
+    default_value: EU_EAQI
+    options:
+    - EU_EAQI
+    - None
+    - UBA
+    - WAQI_InstantCast_US
+    - WAQI_InstantCast_CN
+    - WAQI_InstantCast_CN_25_DRAFT
+    - CA_AQHI
+    - HK_AQHI
+    - AQHI_Multi_CN
+    - AQHI_Multi_CN_HK
+    - CN_DEATH_AQHI
+    - CN_DEATH_HK_AQHI
+  API.ColorfulClouds.Token:
+    name: '[API] 彩云天气令牌'
+    description: 彩云天气 API 令牌
+    default_value: ''
+  API.QWeather.Host:
+    name: '[API] 和风天气主机'
+    description: 和风天气 API 使用的主机名
+    default_value: devapi.qweather.com
+  API.QWeather.Token:
+    name: '[API] 和风天气令牌'
+    description: 和风天气 API 令牌
+    default_value: ''
+  API.WAQI.Token:
+    name: '[API] WAQI 令牌'
+    description: WAQI API 令牌，填写此字段将自动使用WAQI高级API
+    default_value: ''
+  Storage:
+    name: '[储存] 配置类型'
+    description: 选择要使用的配置类型。未设置此选项或不通过此选项的旧版本的配置顺序依旧是 $persistentStore (BoxJs) > $argument > database。
+    default_value: Argument
+    options:
+    - Argument
+    - PersistentStore
+    - database
+  LogLevel:
+    name: '[调试] 日志等级'
+    description: 选择脚本日志的输出等级，低于所选等级的日志将全部输出。
+    default_value: WARN
+    options:
+    - WARN
+    - OFF
+    - ERROR
+    - INFO
+    - DEBUG
+    - ALL
+open_url: http://boxjs.com/#/app/iRingo.WeatherKit
+author: VirgilClyne[https://github.com/VirgilClyne],WordlessEcho[https://github.com/WordlessEcho],001[https://github.com/001ProMax]
+homepage: https://NSRingo.github.io/guide/Weather/weather-kit
+icon: https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/Category_Weather.png
+dns: {}
+rules:
+- domain:
+    match: weather-analytics-events.apple.com
+    policy: REJECT-DROP
+- domain_suffix:
+    match: tthr.apple.com
+    policy: REJECT-DROP
+- domain:
+    match: tether.edge.apple
+    policy: REJECT-DROP
+- and:
+    match:
+    - asn:
+        match: '714'
+        no_resolve: true
+    - protocol:
+        match: QUIC
+    policy: REJECT-DROP
+scriptings:
+- http_response:
+    name: 🌤 WeatherKit.api.v1.availability.response
+    match: ^https?:\/\/weatherkit\.apple\.com\/api\/v1\/availability\/
+    script_url: https://github.com/NSRingo/WeatherKit/releases/download/v4.0.0-beta3/response.bundle.js
+    env:
+      _compat.$argument: '{"Weather.Provider":"ColorfulClouds","NextHour.Provider":"ColorfulClouds","AirQuality.Calculate.Algorithm":"CN_DEATH_HK_AQHI","API.ColorfulClouds.Token":"","API.QWeather.Host":"devapi.qweather.com","API.QWeather.Token":"","API.WAQI.Token":"","Storage":"Argument","LogLevel":"WARN"}'
+    body_required: true
+- http_request:
+    name: 🌤 WeatherKit.api.v1.airQualityScale.request
+    match: ^https?:\/\/weatherkit\.apple\.com\/api\/v1\/airQualityScale\/
+    script_url: https://github.com/NSRingo/WeatherKit/releases/download/v4.0.0-beta3/request.bundle.js
+    env:
+      _compat.$argument: '{"Weather.Provider":"ColorfulClouds","NextHour.Provider":"ColorfulSymbols.Provider":"ColorfulClouds","AirQuality.Calculate.Algorithm":"CN_DEATH_HK_AQHI","API.ColorfulClouds.Token":"","API.QWeather.Host":"devapi.qweather.com","API.QWeather.Token":"","API.WAQI.Token":"","Storage":"Argument","LogLevel":"WARN"}'
+- http_response:
+    name: 🌤 WeatherKit.api.v2.weather.response
+    match: ^https?:\/\/weatherkit\.apple\.com\/api\/v2\/weather\/
+    script_url: https://github.com/NSRingo/WeatherKit/releases/download/v4.0.0-beta3/response.bundle.js
+    env:
+      _compat.$argument: '{"Weather.Provider":"ColorfulClouds","NextHour.Provider":"ColorfulClouds","AirQuality.Calculate.Algorithm":"CN_DEATH_HK_AQHI","API.ColorfulClouds.Token":"","API.QWeather.Host":"devapi.qweather.com","API.QWeather.Token":"","API.WAQI.Token":"","Storage":"Argument","LogLevel":"WARN"}'
+    body_required: true
+    binary_body: true
+mitm:
+  hostnames:
+    includes:
+    - weatherkit.apple.com
