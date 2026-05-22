@@ -15,6 +15,13 @@ DOMAIN,mesu.apple.com,REJECT
 DOMAIN,updates-http.cdn-apple.com,REJECT
 DOMAIN,xp.apple.com,REJECT
 
+# ===== 2.1. 苹果服务强制直连（解决 iCloud DNS 解析超时） =====
+DOMAIN-SUFFIX,apple.com,DIRECT
+DOMAIN-SUFFIX,icloud.com,DIRECT
+DOMAIN-SUFFIX,icloud-content.com,DIRECT
+DOMAIN-SUFFIX,cdn-apple.com,DIRECT
+DOMAIN-SUFFIX,apple-dns.net,DIRECT
+
 # ===== 3. IPv4 保留 / 内网 / 特殊地址直连 =====
 IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
 IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
