@@ -1,0 +1,10 @@
+#!name=Google重定向
+#!desc=CN谷歌重定向
+#!category=🛠️ 工具模块
+#!icon=https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/icon/qure/color/Google.png
+
+https://ahrefs.com/writing-tools/paragraph-rewriter
+^https?:\/\/www\.g(oogle)?\.cn https://www.google.com 307
+
+[MITM]
+hostname = %APPEND% www.g.cn, www.google.cn
