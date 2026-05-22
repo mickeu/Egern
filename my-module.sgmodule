@@ -1,5 +1,6 @@
 #!name=我的自定义合并规则
 #!desc=包含本地内网、GEOIP国内直连、Sub-Store、Speedtest、农行屏蔽及苹果OTA控制规则
+#!icon=https://raw.githubusercontent.com/Orz-3/mini/master/Color/Xair.png
 
 [Rule]
 # ===== 1. 核心本地/审计与阻断（高优先级） =====
