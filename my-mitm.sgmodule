@@ -1,0 +1,7 @@
+#!name=自定义MITM解密模块
+#!desc=在此处添加需要解密的域名
+
+[MITM]
+# 这里的 hostname 是你需要解密的域名列表
+# 多个域名请用逗号分隔，支持通配符 *
+hostname = *.example.com, example.org, api.test.com
