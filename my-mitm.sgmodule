@@ -1,5 +1,6 @@
 #!name=自定义MITM解密模块
 #!desc=在此处添加需要解密的域名
+#!icon=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/06jichang/mitce.png
 
 [MITM]
 # 这里的 hostname 是你需要解密的域名列表
