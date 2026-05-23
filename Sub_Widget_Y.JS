@@ -1,5 +1,6 @@
 /**
- * 机场订阅流量监控小组件 (智能布局版)
+ * 机场订阅流量监控小组件 (中号智能布局最终优化版)
+ * 修复：无重置日统一精简显示为“永久”
  * * 【使用说明】
  * 1. 脚本类型：通用
  * 2. 环境变量配置：
@@ -11,8 +12,8 @@
  * - 订阅数 <= 2 时：自动全宽列表显示
  * - 订阅数 > 2 时：自动 2x2 网格显示
  */
-
 export default async function (ctx) {
+  const startTime = Date.now();
   const MAX = 5;
   const slots = [];
 
@@ -31,7 +32,8 @@ export default async function (ctx) {
     }
 
     slots.push({
-      name: (ctx.env[`NAME${i}`] || "").trim() || "机场订阅",
+      id: i,
+      name: (ctx.env[`NAME${i}`] || "").trim() || `机场订阅 ${i}`,
       url,
       resetDay,
     });
@@ -50,7 +52,6 @@ export default async function (ctx) {
     accentOrange: { light: "#FF9500", dark: "#FF9F0A" },
     accentRed: { light: "#FF3B30", dark: "#FF453A" },
     accentPurple: { light: "#5856D6", dark: "#5856D6" },
-    divider: { light: "#E5E5EA", dark: "#48484A" },
     cardBg: { light: "#FFFFFF80", dark: "#2C2C2E80" },
   };
 
@@ -70,7 +71,6 @@ export default async function (ctx) {
       type: "widget",
       backgroundGradient: bgGradient,
       padding: 16,
-      gap: 12,
       refreshAfter: refreshTime,
       children: [
         {
@@ -87,147 +87,178 @@ export default async function (ctx) {
     };
   }
 
-  const results = await Promise.all(slots.map((s) => fetchInfo(ctx, s)));
-  const isGridMode = results.length > 2;
+  const results = [];
+  for (const slot of slots) {
+    const elapsed = Date.now() - startTime;
+    const forceCache = elapsed > 6500;
+    const res = await safeFetchInfo(ctx, slot, forceCache);
+    results.push(res);
+  }
 
-  // 根据数量动态构建布局子元素
-  const contentChildren = isGridMode 
-    ? buildGridChildren(results, colors, ctx) 
-    : buildListChildren(results, colors, ctx);
+  const titleBar = {
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: [2, 4, 2, 4],
+    children: [
+      { type: "image", src: "sf-symbol:network", width: 12, height: 12, color: colors.accentBlue },
+      { type: "text", text: "订阅流量信息", font: { size: "subheadline", weight: "bold" }, textColor: colors.textPrimary },
+      { type: "spacer" },
+      { type: "image", src: "sf-symbol:arrow.clockwise", width: 12, height: 12, color: colors.textTertiary },
+      { type: "text", text: timeStr, font: { size: "caption2", weight: "medium" }, textColor: colors.textTertiary },
+    ],
+  };
+
+  const contentAreaChildren = [];
+
+  if (results.length === 1) {
+    contentAreaChildren.push(buildCard(results[0], colors, ctx, "single"));
+  } else if (results.length === 2) {
+    contentAreaChildren.push(buildCard(results[0], colors, ctx, "double"));
+    contentAreaChildren.push(buildCard(results[1], colors, ctx, "double"));
+  } else if (results.length === 3) {
+    contentAreaChildren.push({
+      type: "stack",
+      direction: "row",
+      gap: 8,
+      children: [
+        { ...buildCard(results[0], colors, ctx, "grid"), flex: 1 },
+        { ...buildCard(results[1], colors, ctx, "grid"), flex: 1 }
+      ]
+    });
+    contentAreaChildren.push({
+      type: "stack",
+      direction: "row",
+      children: [
+        { ...buildCard(results[2], colors, ctx, "grid_full"), flex: 1 }
+      ]
+    });
+  } else {
+    contentAreaChildren.push({
+      type: "stack",
+      direction: "row",
+      gap: 8,
+      children: [
+        { ...buildCard(results[0], colors, ctx, "grid"), flex: 1 },
+        { ...buildCard(results[1], colors, ctx, "grid"), flex: 1 }
+      ]
+    });
+    contentAreaChildren.push({
+      type: "stack",
+      direction: "row",
+      gap: 8,
+      children: [
+        { ...buildCard(results[2], colors, ctx, "grid"), flex: 1 },
+        { ...buildCard(results[3], colors, ctx, "grid"), flex: 1 }
+      ]
+    });
+  }
 
   return {
     type: "widget",
     backgroundGradient: bgGradient,
-    padding: 8,
-    gap: 8,
+    padding: [16, 12, 12, 12],
     refreshAfter: refreshTime,
     children: [
       {
         type: "stack",
-        direction: "row",
-        alignItems: "center",
-        gap: 6,
-        padding: [0, 4],
-        children: [
-          { type: "image", src: "sf-symbol:network", width: 12, height: 12, color: colors.accentBlue },
-          { type: "text", text: "订阅流量信息", font: { size: "subheadline", weight: "bold" }, textColor: colors.textPrimary },
-          { type: "spacer" },
-          { type: "image", src: "sf-symbol:arrow.clockwise", width: 12, height: 12, color: colors.textTertiary },
-          { type: "text", text: timeStr, font: { size: "caption2", weight: "medium" }, textColor: colors.textTertiary },
-        ],
-      },
-      {
-        type: "stack",
         direction: "column",
         gap: 8,
-        children: contentChildren,
-      },
+        children: [
+          titleBar,
+          {
+            type: "stack",
+            direction: "column",
+            padding: [4, 0, 0, 0],
+            children: [{ type: "stack", direction: "column", gap: 6, children: contentAreaChildren }]
+          }
+        ]
+      }
     ],
   };
 }
 
-// 列表布局：适用于 <= 2 条订阅
-function buildListChildren(results, colors, ctx) {
-  return results.map(r => buildCard(r, colors, ctx));
-}
-
-// 网格布局：适用于 > 2 条订阅
-function buildGridChildren(results, colors, ctx) {
-  const rows = [];
-  const displayResults = results.slice(0, 4); // 限制最多展示 4 个
-  for (let i = 0; i < displayResults.length; i += 2) {
-    rows.push(displayResults.slice(i, i + 2));
-  }
-  return rows.map(row => ({
-    type: "stack",
-    direction: "row",
-    gap: 8,
-    children: row.map(r => ({
-      type: "stack",
-      flex: 1, 
-      children: [buildCard(r, colors, ctx)]
-    }))
-  }));
-}
-
-const CACHE_TIME = 1 * 60 * 60 * 1000;
-
-async function fetchInfo(ctx, slot) {
-  const cacheKey = `sub_cache_${slot.url}`;
-  let cache = await ctx.storage.get(cacheKey);
-  let cacheData = null;
-
-  if (cache) {
-    try {
-      const parsed = JSON.parse(cache);
-      if (Date.now() - parsed.time < CACHE_TIME) {
-        return {
-          ...parsed.data,
-          name: slot.name,
-          remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null,
-        };
-      }
-      cacheData = parsed.data;
-    } catch {}
-  }
-
-  const urls = buildVariants(slot.url);
-  for (const method of ["head", "get"]) {
-    for (const url of urls) {
-      for (const headers of UA_LIST) {
-        try {
-          const resp = await ctx.http[method](url, { headers });
-          const raw = resp.headers.get("subscription-userinfo") || "";
-          const info = parseUserInfo(raw);
-          if (info) {
-            const used = (info.upload || 0) + (info.download || 0);
-            const totalBytes = info.total || 0;
-            const percent = totalBytes > 0 ? (used / totalBytes) * 100 : 0;
-            const result = {
-              error: null,
-              used,
-              totalBytes,
-              percent,
-              expire: info.expire || null,
-              remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null,
-            };
-            await ctx.storage.set(cacheKey, JSON.stringify({ time: Date.now(), data: result }));
-            return { ...result, name: slot.name };
-          }
-        } catch (_) {}
-      }
-    }
-  }
-  if (cacheData) return { ...cacheData, name: slot.name };
-  return { name: slot.name, error: true };
-}
-
-function buildCard(result, colors, ctx) {
+function buildCard(result, colors, ctx, layoutMode = "single") {
   const { name, error, used, totalBytes, percent, remainDays } = result;
+  
+  // 原逻辑保留
   let statusColor = colors.accentGreen;
   if (error) statusColor = colors.accentRed;
   else if (percent >= 95) statusColor = colors.accentRed;
   else if (percent >= 80) statusColor = colors.accentOrange;
   else if (percent >= 50) statusColor = colors.accentPurple;
 
+  let cardHeight = 60;
+  let itemGap = 5;
+  // 关键：为了不偏上，我们统一使用较小的 padding 
+  let paddingConfig = [10, 12, 10, 12]; 
+
+  if (layoutMode === "single") {
+    cardHeight = 72;
+    itemGap = 8;
+  } else if (layoutMode === "double") {
+    cardHeight = 54;
+    itemGap = 4;
+  } else if (layoutMode === "grid" || layoutMode === "grid_full") {
+    cardHeight = 52;
+    itemGap = 3;
+    paddingConfig = [6, 10, 6, 10];
+  }
+
   if (error) {
-    return { type: "stack", direction: "row", alignItems: "center", gap: 6, padding: [8, 10], backgroundColor: colors.cardBg, borderRadius: 8, children: [
+    return {
+      type: "stack",
+      direction: "row",
+      alignItems: "center",
+      gap: 6,
+      padding: paddingConfig,
+      height: cardHeight,
+      backgroundColor: colors.cardBg,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: { light: "#FFFFFF40", dark: "#FFFFFF10" },
+      children: [
         { type: "image", src: "sf-symbol:exclamationmark.circle.fill", width: 12, height: 12, color: colors.accentRed },
         { type: "text", text: name, font: { size: "caption2", weight: "semibold" }, textColor: colors.textPrimary, flex: 1 },
-      ] };
+        { type: "text", text: "同步失败", font: { size: "caption2", weight: "medium" }, textColor: colors.textTertiary }
+      ]
+    };
   }
 
   const progressPercent = Math.min(Math.max(percent, 0), 100);
   const usedStr = formatBytes(used);
   const totalStr = formatBytes(totalBytes);
+  const remainStr = formatBytes(Math.max(0, totalBytes - used));
+
+  let footerChildren = [];
+  if (layoutMode === "single" || layoutMode === "double") {
+    const resetText = remainDays !== null ? `流量重置时间 ${remainDays}天后` : "永久";
+    footerChildren = [
+      { type: "text", text: `${usedStr}/${totalStr}`, font: { size: "caption2", weight: "medium" }, textColor: colors.textSecondary },
+      { type: "spacer" },
+      { type: "text", text: resetText, font: { size: "caption2", weight: "medium" }, textColor: colors.textTertiary },
+      { type: "spacer" },
+      { type: "text", text: `剩 ${remainStr}`, font: { size: "caption2", weight: "semibold" }, textColor: statusColor }
+    ];
+  } else {
+    const dayText = remainDays !== null ? `${remainDays}天` : "永久";
+    const dayColor = remainDays !== null ? statusColor : colors.textTertiary;
+    footerChildren = [
+      { type: "text", text: `${usedStr}/${totalStr}`, font: { size: "caption2", weight: "medium" }, textColor: colors.textSecondary },
+      { type: "spacer" },
+      { type: "text", text: dayText, font: { size: "caption2", weight: "semibold" }, textColor: dayColor }
+    ];
+  }
 
   return {
     type: "stack",
     direction: "column",
-    gap: 6,
-    padding: [8, 10],
+    gap: itemGap,
+    padding: paddingConfig,
+    height: cardHeight,
     backgroundColor: colors.cardBg,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: { light: "#FFFFFF40", dark: "#FFFFFF10" },
     children: [
@@ -242,22 +273,77 @@ function buildCard(result, colors, ctx) {
           { type: "text", text: `${Math.round(progressPercent)}%`, font: { size: "caption2", weight: "bold" }, textColor: statusColor },
         ],
       },
-      { type: "stack", height: 4, borderRadius: 2, children: [
-          { type: "stack", flex: Math.max(progressPercent, 1), height: 4, backgroundColor: statusColor, borderRadius: 2 },
-          { type: "stack", flex: Math.max(100 - progressPercent, 1), height: 4, backgroundColor: { light: "#00000010", dark: "#FFFFFF10" }, borderRadius: 2 },
-        ]},
-      { type: "stack", direction: "row", alignItems: "center", children: [
-          { type: "text", text: `${usedStr}/${totalStr}`, font: { size: "caption2", weight: "medium" }, textColor: colors.textSecondary },
-          { type: "spacer" },
-          { type: "text", text: remainDays !== null ? `${remainDays}天` : "未知", font: { size: "caption2", weight: "semibold" }, textColor: colors.accentGreen },
-        ]}
+      {
+        type: "stack",
+        direction: "row",
+        height: 5,
+        borderRadius: 2.5,
+        children: [
+          { type: "stack", flex: Math.max(progressPercent, 1), height: 5, backgroundColor: statusColor, borderRadius: 2.5 },
+          { type: "stack", flex: Math.max(100 - progressPercent, 1), height: 5, backgroundColor: { light: "#00000010", dark: "#FFFFFF10" }, borderRadius: 2.5 },
+        ]
+      },
+      { type: "stack", direction: "row", alignItems: "center", children: footerChildren }
     ]
   };
 }
 
-const UA_LIST = [{ "User-Agent": "Quantumult%20X/1.5.2" }, { "User-Agent": "clash-verge-rev/2.3.1", Accept: "application/x-yaml,text/plain,*/*" }, { "User-Agent": "mihomo/1.19.3", Accept: "application/x-yaml,text/plain,*/*" }];
-function buildVariants(url) { const seen = new Set(); const out = []; const add = (u) => { if (u && !seen.has(u)) { seen.add(u); out.push(u); } }; add(url); add(withParam(url, "flag", "clash")); add(withParam(url, "flag", "meta")); return out; }
-function withParam(url, key, value) { return `${url}${url.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`; }
+const CACHE_TIME = 30 * 60 * 1000;
+
+async function safeFetchInfo(ctx, slot, forceCache) {
+  const cacheKey = `sub_cache_v5_${encodeURIComponent(slot.url)}`;
+  let savedCache = null;
+
+  try {
+    const rawCache = await ctx.storage.get(cacheKey);
+    if (rawCache) {
+      savedCache = JSON.parse(rawCache);
+      if (!forceCache && (Date.now() - savedCache.time < CACHE_TIME)) {
+        return { ...savedCache.data, name: slot.name, remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null };
+      }
+    }
+  } catch (e) {}
+
+  if (forceCache && savedCache) {
+    return { ...savedCache.data, name: slot.name, remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null };
+  }
+
+  const targetRequests = [
+    { url: slot.url, headers: { "User-Agent": "clash-verge-rev/2.3.1", Accept: "application/x-yaml,text/plain,*/*" } },
+    { url: slot.url.includes("?") ? `${slot.url}&flag=clash` : `${slot.url}?flag=clash`, headers: { "User-Agent": "Quantumult%20X/1.5.2" } }
+  ];
+
+  for (const req of targetRequests) {
+    try {
+      const resp = await Promise.race([
+        ctx.http.get(req.url, { headers: req.headers }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000))
+      ]);
+
+      if (resp && resp.headers) {
+        let raw = "";
+        if (typeof resp.headers.get === "function") {
+          raw = resp.headers.get("subscription-userinfo") || "";
+        } else {
+          raw = resp.headers["subscription-userinfo"] || resp.headers["Subscription-Userinfo"] || "";
+        }
+
+        const info = parseUserInfo(raw);
+        if (info) {
+          const used = (info.upload || 0) + (info.download || 0);
+          const totalBytes = info.total || 0;
+          const percent = totalBytes > 0 ? (used / totalBytes) * 100 : 0;
+          const result = { error: null, used, totalBytes, percent, expire: info.expire || null, remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null };
+          ctx.storage.set(cacheKey, JSON.stringify({ time: Date.now(), data: result })).catch(() => {});
+          return { ...result, name: slot.name };
+        }
+      }
+    } catch (err) {}
+  }
+
+  return savedCache ? { ...savedCache.data, name: slot.name, remainDays: slot.resetDay ? getRemainingDays(slot.resetDay) : null } : { name: slot.name, error: true };
+}
+
 function parseUserInfo(header) { if (!header) return null; const pairs = header.match(/\w+=[\d.eE+-]+/g) || []; if (!pairs.length) return null; return Object.fromEntries(pairs.map(p => { const [k, v] = p.split("="); return [k, Number(v)]; })); }
 function formatBytes(bytes) { if (!Number.isFinite(bytes) || bytes <= 0) return "0B"; const units = ["B", "KB", "MB", "GB", "TB"]; const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1); const value = bytes / Math.pow(1024, i); return `${value >= 10 ? Math.round(value) : value.toFixed(1)}${units[i]}`; }
 function getRemainingDays(resetDay) { const now = new Date(); const maxDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(); const safeDay = Math.min(resetDay, maxDay); let next = new Date(now.getFullYear(), now.getMonth(), safeDay); if (now.getDate() >= safeDay) { const nextMonthMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).getDate(); const nextSafeDay = Math.min(resetDay, nextMonthMax); next = new Date(now.getFullYear(), now.getMonth() + 1, nextSafeDay); } return Math.max(0, Math.ceil((next - now) / 86400000)); }
