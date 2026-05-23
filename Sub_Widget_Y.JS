@@ -1,6 +1,12 @@
 /**
- * 机场订阅流量监控小组件修改版
- * 修正版：移除“重置”字样，仅显示剩余天数，强制 2x2 布局
+ * 机场订阅流量监控小组件 (优雅修正版)
+ * * 【使用说明】
+ * 1. 脚本类型：通用
+ * 2. 环境变量配置：
+ * - NAME1：订阅名称
+ * - URL1 ：订阅链接
+ * - RESET1：每月重置日期 (1-31 的数字)
+ * (支持多组配置：NAME2/URL2/RESET2 ... 最多 4 组)
  */
 
 export default async function (ctx) {
@@ -42,13 +48,14 @@ export default async function (ctx) {
     accentRed: { light: "#FF3B30", dark: "#FF453A" },
     accentPurple: { light: "#5856D6", dark: "#5856D6" },
     divider: { light: "#E5E5EA", dark: "#48484A" },
+    cardBg: { light: "#FFFFFF80", dark: "#2C2C2E80" },
   };
 
   const bgGradient = {
     type: "linear",
     colors: [
-      { light: "#FFFFFF", dark: "#2C2C2E" },
-      { light: "#FFFFFF", dark: "#2C2C2E" },
+      { light: "#FFFFFF20", dark: "#2C2C2E40" },
+      { light: "#FFFFFF20", dark: "#2C2C2E40" },
     ],
     stops: [0, 1],
     startPoint: { x: 0, y: 0 },
@@ -101,7 +108,7 @@ export default async function (ctx) {
         padding: [0, 4],
         children: [
           { type: "image", src: "sf-symbol:network", width: 12, height: 12, color: colors.accentBlue },
-          { type: "text", text: "机场订阅", font: { size: "subheadline", weight: "bold" }, textColor: colors.textPrimary },
+          { type: "text", text: "订阅流量信息", font: { size: "subheadline", weight: "bold" }, textColor: colors.textPrimary },
           { type: "spacer" },
           { type: "image", src: "sf-symbol:arrow.clockwise", width: 12, height: 12, color: colors.textTertiary },
           { type: "text", text: timeStr, font: { size: "caption2", weight: "medium" }, textColor: colors.textTertiary },
@@ -187,7 +194,7 @@ function buildCard(result, colors, ctx) {
   else if (percent >= 50) statusColor = colors.accentPurple;
 
   if (error) {
-    return { type: "stack", direction: "row", alignItems: "center", gap: 6, padding: [8, 10], backgroundColor: { light: "#FFF5F5", dark: "#3B1F1F" }, borderRadius: 8, children: [
+    return { type: "stack", direction: "row", alignItems: "center", gap: 6, padding: [8, 10], backgroundColor: colors.cardBg, borderRadius: 8, children: [
         { type: "image", src: "sf-symbol:exclamationmark.circle.fill", width: 12, height: 12, color: colors.accentRed },
         { type: "text", text: name, font: { size: "caption2", weight: "semibold" }, textColor: colors.textPrimary, flex: 1 },
       ] };
@@ -200,12 +207,12 @@ function buildCard(result, colors, ctx) {
   return {
     type: "stack",
     direction: "column",
-    gap: 4,
+    gap: 6,
     padding: [8, 10],
-    backgroundColor: { light: "#FFFFFF", dark: "#2B2B2D" },
+    backgroundColor: colors.cardBg,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.divider,
+    borderColor: { light: "#FFFFFF40", dark: "#FFFFFF10" },
     children: [
       {
         type: "stack",
@@ -220,12 +227,11 @@ function buildCard(result, colors, ctx) {
       },
       { type: "stack", height: 4, borderRadius: 2, children: [
           { type: "stack", flex: Math.max(progressPercent, 1), height: 4, backgroundColor: statusColor, borderRadius: 2 },
-          { type: "stack", flex: Math.max(100 - progressPercent, 1), height: 4, backgroundColor: { light: "#E8E8EA", dark: "#48484A" }, borderRadius: 2 },
+          { type: "stack", flex: Math.max(100 - progressPercent, 1), height: 4, backgroundColor: { light: "#00000010", dark: "#FFFFFF10" }, borderRadius: 2 },
         ]},
       { type: "stack", direction: "row", alignItems: "center", children: [
           { type: "text", text: `${usedStr}/${totalStr}`, font: { size: "caption2", weight: "medium" }, textColor: colors.textSecondary },
           { type: "spacer" },
-          // 底部去掉了“重置”二字
           { type: "text", text: remainDays !== null ? `${remainDays}天` : "未知", font: { size: "caption2", weight: "semibold" }, textColor: colors.accentGreen },
         ]}
     ]
