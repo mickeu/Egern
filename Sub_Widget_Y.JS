@@ -1,5 +1,5 @@
 /**
- * 机场订阅流量监控小组件 (优雅修正版)
+ * 机场订阅流量监控小组件 (智能布局版)
  * * 【使用说明】
  * 1. 脚本类型：通用
  * 2. 环境变量配置：
@@ -7,6 +7,9 @@
  * - URL1 ：订阅链接
  * - RESET1：每月重置日期 (1-31 的数字)
  * (支持多组配置：NAME2/URL2/RESET2 ... 最多 4 组)
+ * * 布局逻辑：
+ * - 订阅数 <= 2 时：自动全宽列表显示
+ * - 订阅数 > 2 时：自动 2x2 网格显示
  */
 
 export default async function (ctx) {
@@ -85,13 +88,12 @@ export default async function (ctx) {
   }
 
   const results = await Promise.all(slots.map((s) => fetchInfo(ctx, s)));
+  const isGridMode = results.length > 2;
 
-  const maxDisplay = 4; 
-  const displayResults = results.slice(0, maxDisplay);
-  const rows = [];
-  for (let i = 0; i < displayResults.length; i += 2) {
-    rows.push(displayResults.slice(i, i + 2));
-  }
+  // 根据数量动态构建布局子元素
+  const contentChildren = isGridMode 
+    ? buildGridChildren(results, colors, ctx) 
+    : buildListChildren(results, colors, ctx);
 
   return {
     type: "widget",
@@ -118,19 +120,34 @@ export default async function (ctx) {
         type: "stack",
         direction: "column",
         gap: 8,
-        children: rows.map(row => ({
-          type: "stack",
-          direction: "row",
-          gap: 8,
-          children: row.map(r => ({
-            type: "stack",
-            flex: 1, 
-            children: [buildCard(r, colors, ctx)]
-          }))
-        })),
+        children: contentChildren,
       },
     ],
   };
+}
+
+// 列表布局：适用于 <= 2 条订阅
+function buildListChildren(results, colors, ctx) {
+  return results.map(r => buildCard(r, colors, ctx));
+}
+
+// 网格布局：适用于 > 2 条订阅
+function buildGridChildren(results, colors, ctx) {
+  const rows = [];
+  const displayResults = results.slice(0, 4); // 限制最多展示 4 个
+  for (let i = 0; i < displayResults.length; i += 2) {
+    rows.push(displayResults.slice(i, i + 2));
+  }
+  return rows.map(row => ({
+    type: "stack",
+    direction: "row",
+    gap: 8,
+    children: row.map(r => ({
+      type: "stack",
+      flex: 1, 
+      children: [buildCard(r, colors, ctx)]
+    }))
+  }));
 }
 
 const CACHE_TIME = 1 * 60 * 60 * 1000;
