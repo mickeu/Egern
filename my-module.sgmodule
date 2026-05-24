@@ -53,6 +53,7 @@ DOMAIN-SUFFIX,speedtest.cn,DIRECT
 
 # ===== 6. 特定域名走代理 =====
 DOMAIN,js.appds.vip,美国节点
+DOMAIN-SUFFIX,okx.com,美国节点
 
 # ===== 7. 兜底国内 IP 直连 =====
 GEOIP,CN,DIRECT,no-resolve
