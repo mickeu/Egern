@@ -1,21 +1,24 @@
-#!name=我的自定义合并规则
+#!name=我的自定义合并规则（仅为作者个人场景适用）
 #!desc=包含本地内网、GEOIP国内直连、Sub-Store、Speedtest、农行屏蔽及苹果OTA控制规则
 #!icon=https://raw.githubusercontent.com/Orz-3/mini/master/Color/Xair.png
 
 [Rule]
+# ===== 0. 强制优先级（最高，必须放在最前） =====
+DOMAIN-SUFFIX,okx.com,美国节点
+DOMAIN,js.appds.vip,美国节点
+
 # ===== 1. 核心本地/审计与阻断（高优先级） =====
 DOMAIN,sub-store.box,DIRECT
 IP-CIDR,127.0.0.1/32,DIRECT
 DOMAIN,msmp.abchina.com.cn,REJECT
 
-# ===== 2. 苹果系统更新与诊断控制（可根据需求修改 REJECT） =====
-# 如果需要正常更新系统，请将下方的 REJECT 改为 DIRECT 或你的代理策略名
+# ===== 2. 苹果系统更新与诊断控制 =====
 DOMAIN,gdmf.apple.com,REJECT
 DOMAIN,mesu.apple.com,REJECT
 DOMAIN,updates-http.cdn-apple.com,REJECT
 DOMAIN,xp.apple.com,REJECT
 
-# ===== 2.1. 苹果服务强制直连（解决 iCloud DNS 解析超时） =====
+# ===== 2.1. 苹果服务强制直连 =====
 DOMAIN-SUFFIX,apple.com,DIRECT
 DOMAIN-SUFFIX,icloud.com,DIRECT
 DOMAIN-SUFFIX,icloud-content.com,DIRECT
@@ -52,8 +55,7 @@ DOMAIN-SUFFIX,cn,DIRECT
 DOMAIN-SUFFIX,speedtest.cn,DIRECT
 
 # ===== 6. 特定域名走代理 =====
-DOMAIN,js.appds.vip,美国节点
-DOMAIN-SUFFIX,okx.com,美国节点
+# (注：已移至最上方优先级更高处)
 
 # ===== 7. 兜底国内 IP 直连 =====
 GEOIP,CN,DIRECT,no-resolve
