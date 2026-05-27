@@ -10,7 +10,7 @@ scriptings:
     timeout: 60
 - schedule:
     name: PingMe签到
-    cron: 30 */8 * * *
+    cron: 00 */3 * * *
     script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/PingMe_task.js
     timeout: 240
 mitm:
