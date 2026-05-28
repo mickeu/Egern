@@ -1,10 +1,30 @@
 /*
-@Name：PingMe 自动化签到+视频奖励 (支持多账号)
-@Author：原作者怎么肥事 https://raw.githubusercontent.com/ZenmoFeiShi/Qx/refs/heads/main/PingMe.js
+@Name：PingMe 自动化签到+视频奖励 (支持多账号 - Egern 完美兼容版)
+@Author：原作者怎么肥事
 @modify 做了多账号修改，理论支持 Qx,Loon,Surge,Egern,ShadowRocket,青龙
 @mickeu 2026-05-27 18:00:00
 @mickeu 增加了多账号错峰启动与任务随机延迟，防止高并发风控
 */
+
+// ================== 1. Egern 兼容性环境补丁 (核心修复) ==================
+const isEgern = typeof ctx !== 'undefined';
+const $httpClient = isEgern ? {
+    get: (options, callback) => ctx.http.send(options, (err, resp, data) => callback(err, resp, data)),
+    post: (options, callback) => ctx.http.send(options, (err, resp, data) => callback(err, resp, data))
+} : (typeof $httpClient !== 'undefined' ? $httpClient : null);
+
+const $persistentStore = isEgern ? {
+    read: (key) => ctx.store.get(key),
+    write: (value, key) => ctx.store.set(key, value)
+} : (typeof $persistentStore !== 'undefined' ? $persistentStore : null);
+
+const $notification = isEgern ? {
+    post: (title, subtitle, body) => ctx.notify(title, subtitle, body)
+} : (typeof $notification !== 'undefined' ? $notification : null);
+
+const $done = isEgern ? (obj => ctx.done(obj)) : (typeof $done !== 'undefined' ? $done : () => {});
+// =======================================================================
+
 console.log('---------【PingMe脚本任务开始】---------');
 console.log('注意: 多账户任务费时,脚本配置设置timeout参数\n');
 
@@ -87,7 +107,7 @@ function MD5(string) {
         a = HH(a, b, c, d, x[k + 9], S31, 0xD9D4D039); d = HH(d, a, b, c, x[k + 12], S32, 0xE6DB99E5); c = HH(c, d, a, b, x[k + 15], S33, 0x1FA27CF8); b = HH(b, c, d, a, x[k + 2], S34, 0xC4AC5665);
         a = II(a, b, c, d, x[k + 0], S41, 0xF4292244); d = II(d, a, b, c, x[k + 7], S42, 0x432AFF97); c = II(c, d, a, b, x[k + 14], S43, 0xAB9423A7); b = II(b, c, d, a, x[k + 5], S44, 0xFC93A039);
         a = II(a, b, c, d, x[k + 12], S41, 0x655B59C3); d = II(d, a, b, c, x[k + 3], S42, 0x8F0CCC92); c = II(c, d, a, b, x[k + 10], S43, 0xFFEFF47D); b = II(b, c, d, a, x[k + 1], S44, 0x85845DD1);
-        a = II(a, b, c, d, x[k + 8], S41, 0x6FA87E4F); d = II(d, a, b, c, x[k + 15], S42, 0xFE2CE6E0); c = II(c, d, a, b, x[k + 6], S43, 0xA3014314); b = II(b, c, d, a, x[k + 13], S44, 0x4E0811A1);
+        a = II(a, b, c, d, x[k + 8], S41, 0x6FA87E4F); d = II(d, a, b, c, x[k + 15], S42, 0xFE2CE6E0); c = II(c, d, a, b, x[k + 6], S43, 0xA3014314); b = II(b, k + 13], S44, 0x4E0811A1);
         a = II(a, b, c, d, x[k + 4], S41, 0xF7537E82); d = II(d, a, b, c, x[k + 11], S42, 0xBD3AF235); c = II(c, d, a, b, x[k + 2], S43, 0x2AD7D2BB); b = II(b, c, d, a, x[k + 9], S44, 0xEB86D391);
         a = AddUnsigned(a, AA); b = AddUnsigned(b, BB); c = AddUnsigned(c, CC); d = AddUnsigned(d, DD);
     }
@@ -214,7 +234,7 @@ function buildHeaders(capture, ua) {
 }
 
 function notify(title, body) {
-    $notification.post(scriptName, title, body);
+    $notification.post(title, "", body);
 }
 
 function sleep(ms) {
@@ -229,16 +249,10 @@ function withTimeout(promise, ms) {
 }
 
 function getTaskName(url) {
-    if (url.includes('queryBalanceAndBonus')) {
-        return '余额';
-    } else if (url.includes('checkIn')) {
-        return '签到';
-    } else if (url.includes('videoBonus')) {
-        return '视频';
-    } else {
-        // 没有匹配到返回默认值
-        return '未知';
-    }
+    if (url.includes('queryBalanceAndBonus')) return '余额';
+    if (url.includes('checkIn')) return '签到';
+    if (url.includes('videoBonus')) return '视频';
+    return '未知';
 }
 
 function runAccount(acc, index, total) {
@@ -251,7 +265,6 @@ function runAccount(acc, index, total) {
     function fetchApi(path, useFakeId) {
         const overrideId = useFakeId ? fakeDeviceId : null;
         const url = buildUrl(path, acc.capture, overrideId);
-        //console.log(url);
         console.log(`【${scriptName}】请求: ` + getTaskName(url));
         return withTimeout(
             new Promise((resolve, reject) => {
@@ -263,7 +276,6 @@ function runAccount(acc, index, total) {
                     const body = data || (err || '');
                     const status = resp ? resp.status : 0;
                     console.log(`【${scriptName}】响应: ${status}`);
-                    //console.log(`${body}`);
                     resolve({ statusCode: status, body });
                 });
             }),
@@ -284,7 +296,6 @@ function runAccount(acc, index, total) {
                             if (d.retcode === 0) {
                                 msgs.push(`🎬 视频${i}: +${d.result?.bonus || '?'} Coins`);
                                 console.log(`【${scriptName}】视频${i}: +${d.result?.bonus} Coins`);
-                                console.log(`【${scriptName}】延迟: ` + VIDEO_DELAY + ` ms`);
                                 resolve(next());
                             } else {
                                 msgs.push(`⏸ 视频${i}: ${d.retmsg}`);
@@ -296,7 +307,7 @@ function runAccount(acc, index, total) {
                             resolve();
                         }
                     }).catch(err => {
-                        msgs.push(`❌ 视频${i}: ${err.error || '请求失败'}`);
+                        msgs.push(`❌ 视频${i}: ${err.message || '请求失败'}`);
                         resolve();
                     });
                 }, i === 0 ? 1500 : VIDEO_DELAY);
@@ -311,15 +322,11 @@ function runAccount(acc, index, total) {
             const d = JSON.parse(res.body);
             if (d.retcode === 0) {
                 msgs.push(`💰 余额: ${d.result.balance} Coins`);
-                console.log(`【${scriptName}】余额查询成功: ${d.result.balance} Coins`);
             } else {
                 msgs.push(`⚠️ 查询: ${d.retmsg}`);
-                console.log(`【${scriptName}】余额查询失败: ${d.retmsg}`);
             }
-
         } catch (e) {
             msgs.push('❌ 查询: 解析失败');
-            console.log(`【${scriptName}】余额查询失败: ${d.retmsg}`);
         }
         return fetchApi('checkIn');
     }).then(res => {
@@ -327,16 +334,11 @@ function runAccount(acc, index, total) {
             const d = JSON.parse(res.body);
             if (d.retcode === 0) {
                 msgs.push(`✅ 签到: ${(d.result?.bonusHint || d.retmsg || '').replace(/\n/g, ' ')}`);
-                console.log(`【${scriptName}】签到成功: ${d.result?.bonusHint || d.retmsg}`);
             } else {
                 msgs.push(`⚠️ 签到: ${d.retmsg}`);
-                console.log(`【${scriptName}】状态: [${d.retcode}]`);
-                console.log(`【${scriptName}】签到失败: ${d.retmsg}`);
             }
-
         } catch (e) {
             msgs.push('❌ 签到: 解析失败');
-            console.log(`【${scriptName}】签到解析失败: ${res.body}`);
         }
         return doVideoLoop(MAX_VIDEO);
     }).then(() => fetchApi('queryBalanceAndBonus')).then(res => {
@@ -344,17 +346,18 @@ function runAccount(acc, index, total) {
             const d = JSON.parse(res.body);
             if (d.retcode === 0) {
                 msgs.push(`💰 最新余额: ${d.result.balance} Coins`);
-                console.log(`【${scriptName}】最新余额: ${d.result.balance} Coins`);
             }
         } catch (e) { }
         return msgs.join('\n');
     }).catch(err => {
-        msgs.push(`❌ 异常: ${err.error || String(err)}`);
+        msgs.push(`❌ 异常: ${err.message || String(err)}`);
         return msgs.join('\n');
     });
 }
 
+// ================== 3. 执行流入口控制 ==================
 if (typeof $request !== 'undefined' && $request) {
+    // 捕获模式 (重写流量触发)
     const paramsRaw = parseRawQuery($request.url);
     const headersMap = normalizeHeaderNameMap($request.headers || {});
     let baseUA = '';
@@ -381,14 +384,14 @@ if (typeof $request !== 'undefined' && $request) {
 
     const total = store.order.length;
     notify(existed ? '🔄 账号参数已更新' : '✅ 新账号已入库', `${alias}（id:${fp}）\n当前账号总数：${total}`);
-    console.log(`【${scriptName}】${existed ? 'update' : 'add'} account ${fp}\n${JSON.stringify(store.accounts[fp], null, 2)}`);
     $done({});
 } else {
+    // 定时运行模式 (Cron 触发)
     const store = loadStore();
     const ids = store.order.filter(id => store.accounts[id]);
     if (!ids.length) {
-        notify('⚠️ 未抓到任何账号', '请先打开 PingMe 触发抓包');
-        $done();
+        notify('⚠️ 未抓到任何账号', '请先打开 PingMe App 并进行操作以触发抓包入库');
+        $done({});
     } else {
         const total = ids.length;
         const results = [];
@@ -401,11 +404,11 @@ if (typeof $request !== 'undefined' && $request) {
         chain.then(() => {
             console.log(`【${scriptName}】全部账号处理完成\n${results.join('\n———\n')}`);
             notify(`🎉 全部完成 (${total}个账号)`, results.join('\n———\n'));
-            $done();
+            $done({});
         }).catch(err => {
             console.log(`【${scriptName}】任务异常: ${err.message}\n${results.join('\n———\n')}`);
-            notify('❌ 任务异常', results.join('\n———\n') + '\n' + (err.error || String(err)));
-            $done();
+            notify('❌ 任务异常', results.join('\n———\n') + '\n' + (err.message || String(err)));
+            $done({});
         });
     }
 }
