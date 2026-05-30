@@ -1,0 +1,17 @@
+😀 PingMe签到
+🤫 支持获取签到参数和每日签到&任务
+🤫 原作者 @ZenMoFiShi
+🤫 奶思修改为支持大部分代理工具
+😀 已支持 🎈 📈  🐿  🌀 🚀 🐲
+name: PingMe Auto CheckIn
+description: PingMe daily check-in + video bonus, multi-account support
+icon: https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme&wetalk.png
+
+Surge：
+[Script]
+PingMe获取签到参数 = type=http-request, pattern=^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js, timeout=60
+PingMe签到 = type=cron,cronexp=0 */4 * * * ,script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js,timeout=300,script-update-interval=0
+
+[MITM]
+hostname = api.pingmeapp.net
+😀 surge专用，其它工具自行转换
