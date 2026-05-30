@@ -5,7 +5,7 @@
 #!😀 已支持 🎈 📈  🐿  🌀 🚀 🐲
 #!name=PingMe一体化
 #!desc=PingMe daily check-in + video bonus, multi-account support
-#!icon=https://mirror.ghproxy.com/https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme%26wetalk.png
+#!icon: https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme&wetalk.png
 
 [Script]
 PingMe获取签到参数 = type=http-request, pattern=^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus, script-path=https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js, timeout=60
