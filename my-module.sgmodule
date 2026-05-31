@@ -3,9 +3,6 @@
 #!icon=https://raw.githubusercontent.com/Orz-3/mini/master/Color/Xair.png
 
 [Rule]
-# ===== 0. 强制优先级（最高，必须放在最前） =====
-DOMAIN-SUFFIX,okx.com,美国节点
-DOMAIN,js.appds.vip,美国节点
 
 # ===== 1. 核心本地/审计与阻断（高优先级） =====
 DOMAIN,sub-store.box,DIRECT
