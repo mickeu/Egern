@@ -9,7 +9,8 @@ DOMAIN,js.appds.vip,美国节点
 
 # ===== 1. 核心本地/审计与阻断（高优先级） =====
 DOMAIN,sub-store.box,DIRECT
-IP-CIDR,127.0.0.1/32,DIRECT
+# 💡 修正：此处加上了 no-resolve，避免域名请求在此处误触发 DNS 解析
+IP-CIDR,127.0.0.1/32,DIRECT,no-resolve
 DOMAIN,msmp.abchina.com.cn,REJECT
 
 # ===== 2. 苹果系统更新与诊断控制 =====
