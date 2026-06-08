@@ -1,0 +1,267 @@
+/**
+ * 中国联通话费流量小组件
+ *
+ * Cookie 获取：抓包工具 → 登录联通 App → 点首页 → 点你当前余额位置查询 → 然后回到你的抓包工具 → 复制 m.client.10010.com 请求中的 Cookie
+ *
+ *# ── 环境变量配置 ──
+ *Cookie: "抓包获取的Cookie
+ *手机号： "186xxxxxxxx（联通手机号）"
+ *
+ */
+export default async function(ctx) {
+  const cookie = ctx.env.Cookie || "JSESSIONID=9F0DDE904484FFE7CDE68D1F9AB52B26;ecs_acc=BLn6qs2dLMYxfu5Rp/tJlR5UoXPsJdxgJczuUKxEstqfhDGb5MML6JqH09c9n1fa9Vv5tspbVRzzyIusic7qK3lOXgquMUFoezRjO35REjzcXQwwzGxfRcyfvsyr/jXKoebiRkgnocEyiPTC5EnRELvnFsifq0LlvBtd/W3kTog=;ecs_token=eyJ2ZXJzaW9uIjoiMDAiLCJkYXRhIjoiYzhkYjRiOGNjYWJlNDYyYjg2MjkxYWJkZmZjZjFiZTQ2MTMyYWFkN2ExOTEyOGNmNDRiNWE0MzAxMmMwNTY1YzAxMTk0ODZjYTNlNTZkOGM3MjUwMGZlYjk5MGNiZTQ2ZTc5MGU5OWMwOTdkZTcxNTI1ZTFlZGE0ZGIwM2RmYmQwMDgwMzkyNGU2NDVlZWM5NzQ1OTgyM2Q0NGYzZTA3Yjc2NWZjYjQ4MTk5YjNmMTU0YzYzZDc5ZWQxYzI3YmYxMTJlYzY2ZDFmYjBlOWU4MGVkY2ZmZDQ4OTRjNzZlODY0NzM0MDdiZDc2YWZhNzNhOWUzZWE2ZjJmMjgyOTdlZmY0NjU3ZjIxODlhYTdmNjYyYzE0NDRjY2RjMWQyNWQyZjViMmEzMzRmYTk5MWM2MjNkZDQ2NzcxMjVhYTAzNmQxY2ExZGRhMmIzN2RlY2Q2NTVlMzMxNTcyNGU5N2VlNTE2ZTYyOGJhNmVlYTkxMTAxMTI0YmFiZjY3M2Q1OWFjMGNmZjYyYzRjNzUwOGI2NWM4MjY0N2Y1ZjgyNmZjNGJiYThjNWYyNDJmZDgxYWQxYTJiODExYmMyOTJlMTViOWY4Mzk4YmJjYWY4Nzg5ZTQ3MmM4MzIyYTgwMDJjNjJlIn0=;third_token=eyJ2ZXJzaW9uIjoiMDAiLCJkYXRhIjoiMTMyYzJlNGFmOTFiOWU0ZTRmMmMyMDQwOWVkNWU5NDJkMTQxZDVhYWQxZWI0YjYyZDBmNTFmYmY5NTM2YjlmMzIwYTdkMzBiNWVkZjNmZmIwYjJjOTMyODA3NWRjY2NhOTE3NGZhOGQwZGExZmQwZjZiYWYwMThiN2RiY2FlOTAxMzcwNzM0OWRlNmQzNTMwZDU2NzFkMTI5OGE1YTY5MSJ9;t3_token=9498470be168d9f19b37ccd5052b6e92;u_account=18573908368;login_type=01";
+  const phone = ctx.env.手机号 || "18573908368";
+
+  const colors = {
+    bg: { light: "#FFFFFF", dark: "#1C1C1E" },
+    secondaryText: { light: "#666666", dark: "#8E8E93" },
+    fee: { light: "#64B5F6", dark: "#64B5F6" },
+    flow: { light: "#34C759", dark: "#30D158" },
+    voice: { light: "#AF52DE", dark: "#BF5AF2" },
+    error: { light: "#FF3B30", dark: "#FF453A" },
+    percent: { light: "#000000", dark: "#FFFFFF" }
+  };
+
+  let data = {
+    fee: { title: "剩余话费", value: "--", unit: "元" },
+    voice: { title: "剩余语音", value: "--", unit: "分钟", percent: "0.00" },
+    flow: { title: "通用流量", value: "--", unit: "", percent: null },
+    updateTime: "--:--",
+    error: null
+  };
+
+  if (!phone || !cookie) {
+    data.error = "配置缺失";
+  } else {
+    try {
+      const [feeResp, detailResp] = await Promise.all([
+        ctx.http.get(`https://m.client.10010.com/mobileserviceimportant/home/queryUserInfoSeven?version=iphone_c@10.0100&desmobiel=${encodeURIComponent(phone)}&showType=0`, {
+          timeout: 8000,
+          headers: { Host: "m.client.10010.com", "User-Agent": "CFNetwork", cookie }
+        }),
+        ctx.http.get("https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContentRevisedInJune", {
+          timeout: 8000,
+          headers: { Host: "m.client.10010.com", "User-Agent": "CFNetwork", cookie }
+        })
+      ]);
+
+      const feeData = await feeResp.json();
+      const detailData = await detailResp.json();
+
+      if (feeData?.code === "Y") {
+        data.fee.value = feeData.feeResource?.feePersent || "0";
+        data.fee.unit = feeData.feeResource?.newUnit || "元";
+        data.flow.value = feeData.flowResource?.flowPersent || "";
+        data.flow.unit = feeData.flowResource?.newUnit || "";
+      }
+
+      if (detailData?.code === "0000" || detailData?.code === "Y") {
+        const voiceRes = detailData.resources?.find(item => item.type === "Voice");
+        if (voiceRes) {
+          const rem = parseFloat(voiceRes.remainResource || "0");
+          const use = parseFloat(voiceRes.userResource || "0");
+          const total = rem + use;
+          data.voice.value = rem;
+          data.voice.percent = total > 0 ? (rem / total * 100).toFixed(2) : "0.00";
+        }
+
+        const flowRes = detailData.resources?.find(item => 
+          item.type === "Flow" && (item.name?.includes("通用") || item.name?.includes("国内"))
+        );
+        if (flowRes) {
+          const rem = parseFloat(flowRes.remainResource || "0");
+          const use = parseFloat(flowRes.userResource || "0");
+          const total = rem + use;
+          if (total > 0 && !flowRes.name?.includes("放心用") && !flowRes.name?.includes("无限")) {
+            data.flow.percent = (rem / total * 100).toFixed(2);
+          } else {
+            data.flow.percent = null;
+          }
+        } else {
+          data.flow.percent = null;
+        }
+      }
+
+      data.updateTime = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      data.error = "数据请求失败";
+    }
+  }
+
+  function renderVoice(percent, val, unit, title, color) {
+    return {
+      type: "stack",
+      direction: "column",
+      flex: 1,
+      gap: 11,
+      children: [
+        {
+          type: "stack",
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          borderWidth: 6,
+          borderColor: color,
+          backgroundColor: colors.bg,
+          alignItems: "center",
+          justifyContent: "center",
+          children: [
+            {
+              type: "stack",
+              direction: "column",
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: colors.bg,
+              alignItems: "center",
+              // 关键修改：用space-between让图标靠上、%靠下，中间文字自然下移
+              justifyContent: "space-between",
+              spacing: 0,
+              children: [
+                // 图标上移1px，贴到圆环上边缘（仅留1px）
+                { type: "image", src: "sf-symbol:phone.and.waveform.fill", color, width: 12, height: 12, offset: { x: 0, y: -1 } },
+                // 中间文字：保留字号11 + 向下偏移3px
+                { type: "text", text: percent, font: { size: 11, weight: "bold" }, textColor: color, offset: { x: 0, y: 3 } },
+                // %号下移1px，贴到圆环下边缘（仅留1px）
+                { type: "text", text: "%", font: { size: 8 }, textColor: colors.percent, offset: { x: 0, y: 1 } }
+              ]
+            }
+          ]
+        },
+        { type: "text", text: `${val}${unit}`, font: { size: 14, weight: "bold" }, textColor: color },
+        { type: "text", text: title, font: { size: 11 }, textColor: color }
+      ]
+    };
+  }
+
+  function renderFlow(flow, title, color) {
+    const { value, unit, percent } = flow;
+    const isUnlimited = percent === null;
+    return {
+      type: "stack",
+      direction: "column",
+      flex: 1,
+      gap: 11,
+      children: [
+        {
+          type: "stack",
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          borderWidth: 6,
+          borderColor: color,
+          backgroundColor: colors.bg,
+          alignItems: "center",
+          justifyContent: "center",
+          children: [
+            {
+              type: "stack",
+              direction: "column",
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: colors.bg,
+              alignItems: "center",
+              // 关键修改：用space-between让图标靠上、%靠下，中间文字自然下移
+              justifyContent: "space-between",
+              spacing: 0,
+              children: isUnlimited ? [
+                // 图标上移1px，贴到圆环上边缘（仅留1px）
+                { type: "image", src: "sf-symbol:antenna.radiowaves.left.and.right", color, width: 12, height: 12, offset: { x: 0, y: -1 } },
+                // 中间文字：保留字号11 + 向下偏移3px
+                { type: "text", text: "无限", font: { size: 11, weight: "bold" }, textColor: color, offset: { x: 0, y: 3 } },
+                // %号下移1px，贴到圆环下边缘（仅留1px）
+                { type: "text", text: "%", font: { size: 8 }, textColor: colors.percent, offset: { x: 0, y: 1 } }
+              ] : [
+                // 图标上移1px，贴到圆环上边缘（仅留1px）
+                { type: "image", src: "sf-symbol:antenna.radiowaves.left.and.right", color, width: 12, height: 12, offset: { x: 0, y: -1 } },
+                // 中间文字：保留字号11 + 向下偏移3px
+                { type: "text", text: percent, font: { size: 11, weight: "bold" }, textColor: color, offset: { x: 0, y: 3 } },
+                // %号下移1px，贴到圆环下边缘（仅留1px）
+                { type: "text", text: "%", font: { size: 8 }, textColor: colors.percent, offset: { x: 0, y: 1 } }
+              ]
+            }
+          ]
+        },
+        { type: "text", text: `${value}${unit}`, font: { size: 14, weight: "bold" }, textColor: color },
+        { type: "text", text: title, font: { size: 11 }, textColor: color }
+      ]
+    };
+  }
+
+  // 话费渲染函数
+  function renderFee(time, val, unit, title, color) {
+    return {
+      type: "stack",
+      direction: "column",
+      flex: 1,
+      alignItems: "center",
+      gap: 11, 
+      children: [
+        {
+          type: "stack",
+          direction: "column",
+          width: 50,
+          height: 50,
+          alignItems: "center",
+          justifyContent: "space-between", 
+          children: [
+            {
+              type: "image",
+              src: "sf-symbol:motorcycle.fill",
+              color: color,
+              width: 56,  
+              height: 36  
+            },
+            {
+              type: "text",
+              text: time,
+              font: { size: 10 },
+              textColor: colors.secondaryText
+            }
+          ]
+        },
+        {
+          type: "text",
+          text: `${val}${unit}`,
+          font: { size: 14, weight: "bold" },
+          textColor: color
+        },
+        {
+          type: "text",
+          text: title,
+          font: { size: 11 },
+          textColor: color
+        }
+      ]
+    };
+  }
+
+  if (data.error) {
+    return {
+      type: "text",
+      text: "❌ " + data.error,
+      font: { size: 14 },
+      textColor: colors.error
+    };
+  }
+
+  return {
+    type: "widget",
+    backgroundColor: colors.bg,
+    padding: [16, 12, 16, 12],
+    refreshAfter: new Date(Date.now() + 3600000).toISOString(),
+    children: [
+      {
+        type: "stack",
+        direction: "row",
+        gap: 8,
+        children: [
+          renderFee(data.updateTime, data.fee.value, data.fee.unit, data.fee.title, colors.fee),
+          renderFlow(data.flow, data.flow.title, colors.flow),
+          renderVoice(data.voice.percent, data.voice.value, data.voice.unit, data.voice.title, colors.voice)
+        ]
+      }
+    ]
+  };
+}
