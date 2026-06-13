@@ -102,7 +102,8 @@ export default async function (ctx) {
     gap: 6,
     padding: [2, 4, 2, 4],
     children: [
-      { type: "image", src: "sf-symbol:network", width: 12, height: 12, color: colors.accentBlue },
+      // 【修改点1】将 "sf-symbol:network" 修改为了 "sf-symbol:chart.bar.fill" (图二的柱状图图标)
+      { type: "image", src: "sf-symbol:chart.bar.fill", width: 12, height: 12, color: colors.accentBlue },
       { type: "text", text: "订阅流量信息", font: { size: "subheadline", weight: "bold" }, textColor: colors.textPrimary },
       { type: "spacer" },
       { type: "image", src: "sf-symbol:arrow.clockwise", width: 12, height: 12, color: colors.textTertiary },
@@ -268,7 +269,9 @@ function buildCard(result, colors, ctx, layoutMode = "single") {
         alignItems: "center",
         gap: 4,
         children: [
-          { type: "image", src: "sf-symbol:circle.fill", width: 6, height: 6, color: statusColor },
+          // 【修改点2】将 "sf-symbol:circle.fill" 替换为 "sf-symbol:network"
+          // 同时为了避免图标过小导致内部线条看不清，将 width 和 height 从 6 改为了 10
+          { type: "image", src: "sf-symbol:network", width: 10, height: 10, color: statusColor },
           { type: "text", text: name, font: { size: "caption2", weight: "bold" }, textColor: colors.textPrimary, flex: 1 },
           { type: "text", text: `${Math.round(progressPercent)}%`, font: { size: "caption2", weight: "bold" }, textColor: statusColor },
         ],
