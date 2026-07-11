@@ -18,7 +18,7 @@ export default async function(ctx) {
   const C_SUB = { light: '#666666', dark: '#B0B0B0' };
   const C_MAIN = { light: '#1A1A1A', dark: '#FFFFFF' };
   const C_GREEN = { light: '#32D74B', dark: '#32D74B' };
-  const C_YELLOW = { light: '#FFD60A', dark: '#FFD60A' };
+  const C_YELLOW = { light: '#FF9500', dark: '#FF9500' };
   const C_ORANGE = { light: '#FF9500', dark: '#FF9500' };
   const C_RED = { light: '#FF3B30', dark: '#FF3B30' };
   const C_ICON = { light: '#007AFF', dark: '#0A84FF' };
