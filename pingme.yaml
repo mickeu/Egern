@@ -5,7 +5,7 @@ compat_arguments:
   arg2: 'true'
   arg3: 'true'
   arg4: 'true'
-  arg5: 0 8,20 * * *
+  arg5: 0 */4 * * *
   arg6: 30 8,20 * * *
   PROXY: PROXY
 compat_arguments_schema:
