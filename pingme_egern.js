@@ -263,7 +263,12 @@ export default async function(ctx) {
   }
 
   function loadStore() {
-    const raw = ctx.storage.get(storeKey);
+    // 优先从 ctx.storage 读取（Egern 原生），兼容 $persistentStore（Surge/Loon 兼容）
+    let raw = null;
+    try { raw = ctx.storage.get(storeKey); } catch(e) {}
+    if (!raw && typeof $persistentStore !== 'undefined' && $persistentStore.read) {
+      try { raw = $persistentStore.read(storeKey); } catch(e) {}
+    }
     if (!raw) return { version: 1, accounts: {}, order: [] };
     try {
       const obj = JSON.parse(raw);
@@ -273,7 +278,11 @@ export default async function(ctx) {
     } catch (e) { return { version: 1, accounts: {}, order: [] }; }
   }
 
-  function saveStore(store) { ctx.storage.set(storeKey, JSON.stringify(store)); }
+  function saveStore(store) {
+    const data = JSON.stringify(store);
+    try { ctx.storage.set(storeKey, data); } catch(e) {}
+    try { if (typeof $persistentStore !== 'undefined' && $persistentStore.write) $persistentStore.write(data, storeKey); } catch(e) {}
+  }
 
   function notify(title, body) {
     try { ctx.notify({ title: scriptName, subtitle: title, body: body }); } catch(e) {}
