@@ -54,7 +54,7 @@ scriptings:
 - schedule:
     name: PingMe签到任务
     cron: 0 */4 * * *
-    script_url: https://raw.githubusercontent.com/3183339668/Egern/refs/heads/main/pingme.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js?v=4
     timeout: 1000
 - schedule:
     name: WeTalk签到任务
