@@ -7,6 +7,13 @@
 const ckKey = 'pingme_capture_v3';
 
 export default async function(ctx) {
+    // 开关：模块 arg2 = false 关闭
+    const arg2 = ctx.env && ctx.env.arg2;
+    if (arg2 === 'false') {
+        console.log('⏸ PingMe 已关闭，跳过抓参');
+        return;
+    }
+
     const url = ctx.request.url;
     console.log('PingMe 开始: ' + url);
 
