@@ -1,5 +1,5 @@
-// PingMe 签到 — Egern 原生版 v3 (2026-07-20)
-// 修复：双重编码问题，统一使用解码后的参数计算签名
+// PingMe 签到 — Egern 原生版 v4 (2026-07-20)
+// 修复：1. 双重编码 2. 禁用 Brotli 压缩确保响应体可读
 
 const scriptName = 'PingMe';
 const storeKey = 'pingme_accounts_v1';
@@ -16,7 +16,6 @@ const DARWIN_VERS = ['22.6.0','23.5.0','23.6.0','24.0.0','22.4.0'];
 const USER_NAME_KEYS = ['email','username','userName','nickname','nickName','name','displayName','accountName','account','phone','mobile','mail','login','loginName','user','uid'];
 const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
-// ====== MD5 ======
 function MD5(string) {
   function RotateLeft(lValue, iShiftBits) { return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits)); }
   function AddUnsigned(lX, lY) {
@@ -89,7 +88,6 @@ function MD5(string) {
   return (WordToHex(a) + WordToHex(b) + WordToHex(c) + WordToHex(d)).toLowerCase();
 }
 
-// ====== 工具函数 ======
 function getUTCSignDate() {
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
@@ -136,22 +134,15 @@ function buildUA(baseUA, seed) {
   return `PingMe/1.0.0 (${model}; iOS ${iosVer}; Scale/${scale}) CFNetwork/${cfn} Darwin/${darwin}`;
 }
 
-// ====== 核心修改：修复双重编码 ======
-
-// 1. 先从 capture 里解码参数（去掉 URL 编码）
+// === 解码 captured params（修复双重编码）===
 function decodeParams(paramsRaw) {
   const decoded = {};
   Object.keys(paramsRaw || {}).forEach(k => {
-    try {
-      decoded[k] = decodeURIComponent(paramsRaw[k]);
-    } catch(e) {
-      decoded[k] = paramsRaw[k]; // 解码失败则用原值
-    }
+    try { decoded[k] = decodeURIComponent(paramsRaw[k]); } catch(e) { decoded[k] = paramsRaw[k]; }
   });
   return decoded;
 }
 
-// 2. 用解码后的参数计算签名
 function buildSignedParamsRaw(capture, overrideDeviceId) {
   const decoded = decodeParams(capture.paramsRaw || {});
   const params = {};
@@ -167,7 +158,6 @@ function buildSignedParamsRaw(capture, overrideDeviceId) {
   return params;
 }
 
-// 3. 构建 URL 时只编码一次
 function buildUrl(path, capture, overrideDeviceId) {
   const params = buildSignedParamsRaw(capture, overrideDeviceId);
   const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
@@ -238,7 +228,7 @@ function accountDisplayName(acc) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ====== Egern 原生入口 ======
+// ====== Egern 入口 ======
 export default async function(ctx) {
 
   function headersToObject(headers) {
@@ -246,15 +236,10 @@ export default async function(ctx) {
     if (!headers) return obj;
     try {
       const keys = Object.keys(headers);
-      if (keys.length > 0) {
-        keys.forEach(k => { const v = headers[k]; obj[k] = Array.isArray(v) ? v[0] : v; });
-        return obj;
-      }
+      if (keys.length > 0) { keys.forEach(k => { const v = headers[k]; obj[k] = Array.isArray(v) ? v[0] : v; }); return obj; }
     } catch(e) {}
-    const allHeaders = ['authorization','Authorization','x-auth-token','x-token','token','x-api-key','api-key','accept','accept-language','accept-encoding','cache-control','connection','content-type','cookie','host','user-agent','origin','referer','pragma','x-requested-with','x-forwarded-for','x-csrf-token','x-xsrf-token','if-none-match','if-modified-since','sec-fetch-dest','sec-fetch-mode','sec-fetch-site','x-client-data','x-device-id','x-session-id','x-request-id','app-version','platform','device-id'];
-    allHeaders.forEach(name => {
-      try { const val = headers[name]; if (val !== undefined && val !== null) obj[name] = Array.isArray(val) ? val[0] : val; } catch(e) {}
-    });
+    const allHeaders = ['authorization','Authorization','x-auth-token','x-token','token','x-api-key','api-key','accept','accept-language','accept-encoding','cache-control','connection','content-type','cookie','host','user-agent','origin','referer','pragma','x-forwarded-for','x-csrf-token','x-xsrf-token','if-none-match','if-modified-since','sec-fetch-dest','sec-fetch-mode','sec-fetch-site','x-client-data','x-device-id','x-session-id','x-request-id','app-version','platform','device-id'];
+    allHeaders.forEach(name => { try { const val = headers[name]; if (val !== undefined && val !== null) obj[name] = Array.isArray(val) ? val[0] : val; } catch(e) {} });
     return obj;
   }
 
@@ -306,6 +291,8 @@ export default async function(ctx) {
     headers['Accept'] = 'application/json';
     headers['User-Agent'] = ua;
     headers['Connection'] = 'close';
+    // 禁用 Brotli 压缩，确保响应体明文可读
+    headers['Accept-Encoding'] = 'gzip, deflate';
     return headers;
   }
 
@@ -391,7 +378,6 @@ export default async function(ctx) {
       const fp = fingerprintOf(paramsRaw);
       const now = Date.now();
       const existed = !!store.accounts[fp];
-
       if (!existed) {
         store.accounts[fp] = { id: fp, alias: `账号${store.order.length + 1}`, userName: '', uaSeed: store.order.length, baseUA, capture: { url, paramsRaw, headers: headersMap }, createdAt: now, updatedAt: now };
         store.order.push(fp);
