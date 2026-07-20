@@ -32,15 +32,6 @@ startTasks().then(r => $.done());
 
 async function startTasks() {
     console.log("开始运行签到");
-
-    // 开关检查：存储 #pingme_switch = false 关闭，不设或 true 开启
-    const switchVal = $.getdata('#pingme_switch');
-    if (switchVal === 'false') {
-        console.log("⏸ PingMe签到已关闭");
-        $.done();
-        return;
-    }
-
     // const raw = $prefs.valueForKey(ckKey);
     const raw = isNode ? process.env[ckKey] : $.getdata(ckKey);
     if (!raw) {
