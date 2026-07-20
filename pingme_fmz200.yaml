@@ -13,7 +13,7 @@ compat_arguments_schema:
     - 'true'
     - 'false'
   arg2:
-    name: PM'token
+    name: PMtoken
     default_value: 'true'
     options:
     - 'true'
