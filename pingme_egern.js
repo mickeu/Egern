@@ -1,5 +1,5 @@
-// PingMe 签到 — Egern 原生版 v2 (2026-07-20)
-// 增加调试日志，诊断"尝试次数过多"问题
+// PingMe 签到 — Egern 原生版 v3 (2026-07-20)
+// 修复：双重编码问题，统一使用解码后的参数计算签名
 
 const scriptName = 'PingMe';
 const storeKey = 'pingme_accounts_v1';
@@ -68,7 +68,6 @@ function MD5(string) {
   const S11 = 7, S12 = 12, S13 = 17, S14 = 22, S21 = 5, S22 = 9, S23 = 14, S24 = 20;
   const S31 = 4, S32 = 11, S33 = 16, S34 = 23, S41 = 6, S42 = 10, S43 = 15, S44 = 21;
   for (let k = 0; k < x.length; k += 16) {
-    const AA = a, BB = b, CC = c, DD = d;
     a = FF(a,b,c,d,x[k+0],S11,0xD76AA478); d = FF(d,a,b,c,x[k+1],S12,0xE8C7B756); c = FF(c,d,a,b,x[k+2],S13,0x242070DB); b = FF(b,c,d,a,x[k+3],S14,0xC1BDCEEE);
     a = FF(a,b,c,d,x[k+4],S11,0xF57C0FAF); d = FF(d,a,b,c,x[k+5],S12,0x4787C62A); c = FF(c,d,a,b,x[k+6],S13,0xA8304613); b = FF(b,c,d,a,x[k+7],S14,0xFD469501);
     a = FF(a,b,c,d,x[k+8],S11,0x698098D8); d = FF(d,a,b,c,x[k+9],S12,0x8B44F7AF); c = FF(c,d,a,b,x[k+10],S13,0xFFFF5BB1); b = FF(b,c,d,a,x[k+11],S14,0x895CD7BE);
@@ -137,10 +136,27 @@ function buildUA(baseUA, seed) {
   return `PingMe/1.0.0 (${model}; iOS ${iosVer}; Scale/${scale}) CFNetwork/${cfn} Darwin/${darwin}`;
 }
 
+// ====== 核心修改：修复双重编码 ======
+
+// 1. 先从 capture 里解码参数（去掉 URL 编码）
+function decodeParams(paramsRaw) {
+  const decoded = {};
+  Object.keys(paramsRaw || {}).forEach(k => {
+    try {
+      decoded[k] = decodeURIComponent(paramsRaw[k]);
+    } catch(e) {
+      decoded[k] = paramsRaw[k]; // 解码失败则用原值
+    }
+  });
+  return decoded;
+}
+
+// 2. 用解码后的参数计算签名
 function buildSignedParamsRaw(capture, overrideDeviceId) {
+  const decoded = decodeParams(capture.paramsRaw || {});
   const params = {};
-  Object.keys(capture.paramsRaw || {}).forEach(k => {
-    if (k !== 'sign' && k !== 'signDate') params[k] = capture.paramsRaw[k];
+  Object.keys(decoded).forEach(k => {
+    if (k !== 'sign' && k !== 'signDate') params[k] = decoded[k];
   });
   if (overrideDeviceId && params.uniquedeviceid) {
     params.uniquedeviceid = overrideDeviceId;
@@ -151,6 +167,7 @@ function buildSignedParamsRaw(capture, overrideDeviceId) {
   return params;
 }
 
+// 3. 构建 URL 时只编码一次
 function buildUrl(path, capture, overrideDeviceId) {
   const params = buildSignedParamsRaw(capture, overrideDeviceId);
   const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
@@ -224,64 +241,27 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ====== Egern 原生入口 ======
 export default async function(ctx) {
 
-  // ---------- 将 Egern Headers 对象转为普通对象 ----------
   function headersToObject(headers) {
     const obj = {};
     if (!headers) return obj;
-    // 方法1：尝试 Object.keys
     try {
       const keys = Object.keys(headers);
       if (keys.length > 0) {
-        keys.forEach(k => { 
-          const v = headers[k];
-          obj[k] = Array.isArray(v) ? v[0] : v; 
-        });
-        console.log(`【${scriptName}】headersToObject: Object.keys 成功，获取到 ${keys.length} 个请求头`);
+        keys.forEach(k => { const v = headers[k]; obj[k] = Array.isArray(v) ? v[0] : v; });
         return obj;
       }
-    } catch(e) {
-      console.log(`【${scriptName}】headersToObject: Object.keys 失败，使用兜底列表`);
-    }
-    // 方法2：兜底 — 全面请求头列表
-    const allHeaders = [
-      'authorization','Authorization','x-auth-token','x-token','token','x-api-key','api-key',
-      'accept','accept-language','accept-encoding','accept-charset','accept-datetime',
-      'access-control-allow-origin','access-control-request-method','access-control-request-headers',
-      'cache-control','connection','content-type','content-length','content-md5','content-range',
-      'cookie','set-cookie','host','user-agent','origin','referer','referrer',
-      'pragma','x-requested-with','x-forwarded-for','x-forwarded-proto','x-real-ip',
-      'x-csrf-token','x-xsrf-token','x-http-method-override',
-      'dnt','do-not-track','upgrade-insecure-requests','save-data',
-      'if-match','if-none-match','if-modified-since','if-unmodified-since','if-range',
-      'range','te','trailer','transfer-encoding','via','warning',
-      'www-authenticate','proxy-authenticate','proxy-authorization',
-      'sec-fetch-dest','sec-fetch-mode','sec-fetch-site','sec-fetch-user',
-      'sec-ch-ua','sec-ch-ua-mobile','sec-ch-ua-platform','sec-ch-ua-platform-version',
-      'sec-ch-ua-arch','sec-ch-ua-bitness','sec-ch-ua-model','sec-ch-ua-full-version',
-      'x-client-data','x-device-id','x-session-id','x-request-id','x-trace-id',
-      'app-version','platform','device-id','device-model','os-version'
-    ];
+    } catch(e) {}
+    const allHeaders = ['authorization','Authorization','x-auth-token','x-token','token','x-api-key','api-key','accept','accept-language','accept-encoding','cache-control','connection','content-type','cookie','host','user-agent','origin','referer','pragma','x-requested-with','x-forwarded-for','x-csrf-token','x-xsrf-token','if-none-match','if-modified-since','sec-fetch-dest','sec-fetch-mode','sec-fetch-site','x-client-data','x-device-id','x-session-id','x-request-id','app-version','platform','device-id'];
     allHeaders.forEach(name => {
-      try {
-        const val = headers[name];
-        if (val !== undefined && val !== null) {
-          obj[name] = Array.isArray(val) ? val[0] : val;
-        }
-      } catch(e) {}
+      try { const val = headers[name]; if (val !== undefined && val !== null) obj[name] = Array.isArray(val) ? val[0] : val; } catch(e) {}
     });
-    console.log(`【${scriptName}】headersToObject: 兜底模式，获取到 ${Object.keys(obj).length} 个请求头`);
     return obj;
   }
 
-  // ---------- Egern HTTP 请求 ----------
   async function egernFetch(request) {
     const url = request.url;
-    const options = {
-      headers: request.headers || {},
-      timeout: request.timeout || 60000
-    };
+    const options = { headers: request.headers || {}, timeout: request.timeout || 60000 };
     if (request.body) options.body = request.body;
-    console.log(`【${scriptName}】请求URL: ${url.substring(0, 200)}...`);
     try {
       let response;
       if ((request.method || 'GET').toUpperCase() === 'POST') {
@@ -290,15 +270,12 @@ export default async function(ctx) {
         response = await ctx.http.get(url, options);
       }
       const body = await response.text();
-      console.log(`【${scriptName}】响应状态码: ${response.status}, 响应体: ${body.substring(0, 300)}`);
       return { statusCode: response.status, headers: response.headers, body: body };
     } catch (err) {
-      console.log(`【${scriptName}】请求异常: ${err.message || String(err)}`);
       throw { error: err.message || String(err) };
     }
   }
 
-  // ---------- 存储 ----------
   function loadStore() {
     const raw = ctx.storage.get(storeKey);
     if (!raw) return { version: 1, accounts: {}, order: [] };
@@ -307,23 +284,15 @@ export default async function(ctx) {
       if (!obj.accounts) obj.accounts = {};
       if (!Array.isArray(obj.order)) obj.order = Object.keys(obj.accounts);
       return obj;
-    } catch (e) {
-      return { version: 1, accounts: {}, order: [] };
-    }
+    } catch (e) { return { version: 1, accounts: {}, order: [] }; }
   }
 
-  function saveStore(store) {
-    ctx.storage.set(storeKey, JSON.stringify(store));
-    console.log(`【${scriptName}】存储已保存, 账号数: ${Object.keys(store.accounts).length}`);
-  }
+  function saveStore(store) { ctx.storage.set(storeKey, JSON.stringify(store)); }
 
-  // ---------- 通知 ----------
   function notify(title, body) {
-    console.log(`【${scriptName}通知】${title}\n${body}`);
     try { ctx.notify({ title: scriptName, subtitle: title, body: body }); } catch(e) {}
   }
 
-  // ---------- 构建请求头 ----------
   function buildHeaders(capture, ua) {
     const headers = {};
     const origHeaders = capture.headers || {};
@@ -334,29 +303,18 @@ export default async function(ctx) {
       headers[k] = origHeaders[k];
     });
     headers['Host'] = 'api.pingmeapp.net';
-    headers['Accept'] = headers['Accept'] || 'application/json';
+    headers['Accept'] = 'application/json';
     headers['User-Agent'] = ua;
     headers['Connection'] = 'close';
-    // 检查是否有认证头
-    const authHeaders = Object.keys(headers).filter(k => /auth|token|cookie/i.test(k));
-    if (authHeaders.length > 0) {
-      console.log(`【${scriptName}】buildHeaders: 包含认证头: ${authHeaders.join(', ')}`);
-    } else {
-      console.log(`【${scriptName}】buildHeaders: ⚠️ 未找到任何认证头`);
-    }
     return headers;
   }
 
-  // ---------- 账号执行 ----------
   function runAccount(acc, index, total) {
     const tag = accountTitle(acc, index, total);
     const ua = buildUA(acc.baseUA, acc.uaSeed);
     const headers = buildHeaders(acc.capture, ua);
     const fakeDeviceId = genFakeDeviceId();
     const msgs = [tag];
-    const email = acc.capture?.paramsRaw?.email ? decodeURIComponent(acc.capture.paramsRaw.email) : '未知';
-
-    console.log(`【${scriptName}】开始执行 ${tag}, email: ${email}`);
 
     function fetchApi(path, useFakeId, retryCount) {
       if (retryCount === undefined) retryCount = 0;
@@ -366,7 +324,6 @@ export default async function(ctx) {
         .catch(err => {
           const m = err && (err.error || err.message || String(err));
           if (retryCount < 2 && /SSL|timeout|timed out|reset|connection|network|stream closed|closed|EOF/i.test(m)) {
-            console.log(`【${scriptName}】${tag} 重试 ${path} (${retryCount+1}/2): ${m}`);
             return sleep(1500).then(() => fetchApi(path, useFakeId, retryCount + 1));
           }
           throw err;
@@ -383,21 +340,10 @@ export default async function(ctx) {
             fetchApi('videoBonus', true).then(res => {
               try {
                 const d = JSON.parse(res.body);
-                if (d.retcode === 0) {
-                  msgs.push(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
-                  resolve(next());
-                } else {
-                  msgs.push(`⏸ 视频${i}：${d.retmsg}`);
-                  resolve();
-                }
-              } catch (e) {
-                msgs.push(`❌ 视频${i}：解析失败`);
-                resolve();
-              }
-            }).catch(err => {
-              msgs.push(`❌ 视频${i}：${err.error || '请求失败'}`);
-              resolve();
-            });
+                if (d.retcode === 0) { msgs.push(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`); resolve(next()); }
+                else { msgs.push(`⏸ 视频${i}：${d.retmsg}`); resolve(); }
+              } catch (e) { msgs.push(`❌ 视频${i}：解析失败`); resolve(); }
+            }).catch(err => { msgs.push(`❌ 视频${i}：${err.error || '请求失败'}`); resolve(); });
           }, i === 0 ? 1500 : VIDEO_DELAY);
         });
       }
@@ -408,7 +354,6 @@ export default async function(ctx) {
       try {
         const d = JSON.parse(res.body);
         updateAccountUserName(acc, d);
-        console.log(`【${scriptName}】${tag} queryBalanceAndBonus: retcode=${d.retcode}, retmsg=${d.retmsg || '无'}`);
         if (d.retcode === 0) msgs.push(`💰 余额：${d.result.balance} Coins`);
         else msgs.push(`⚠️ 查询：${d.retmsg}`);
       } catch (e) { msgs.push('❌ 查询：解析失败'); }
@@ -417,7 +362,6 @@ export default async function(ctx) {
       try {
         const d = JSON.parse(res.body);
         updateAccountUserName(acc, d);
-        console.log(`【${scriptName}】${tag} checkIn: retcode=${d.retcode}, retmsg=${d.retmsg || '无'}`);
         if (d.retcode === 0) msgs.push(`✅ 签到：${(d.result?.bonusHint || d.retmsg || '').replace(/\n/g, ' ')}`);
         else msgs.push(`⚠️ 签到：${d.retmsg}`);
       } catch (e) { msgs.push('❌ 签到：解析失败'); }
@@ -428,44 +372,28 @@ export default async function(ctx) {
         updateAccountUserName(acc, d);
         if (d.retcode === 0) msgs.push(`💰 最新余额：${d.result.balance} Coins`);
       } catch (e) {}
-      console.log(`【${scriptName}】${tag} 执行完毕`);
       return msgs.join('\n');
     }).catch(err => {
       msgs.push(`❌ 异常：${err.error || err.message || String(err)}`);
-      console.log(`【${scriptName}】${tag} 异常: ${err.error || err.message || String(err)}`);
       return msgs.join('\n');
     });
   }
 
   // ====== 主入口 ======
   if (ctx.request) {
-    // --- HTTP 请求模式：抓包 ---
     try {
       const url = ctx.request.url;
-      console.log(`【${scriptName}】抓包触发: ${url.substring(0, 300)}`);
       const headersMap = headersToObject(ctx.request.headers);
       let baseUA = '';
       Object.keys(headersMap).forEach(k => { if (k.toLowerCase() === 'user-agent') baseUA = headersMap[k]; });
-      console.log(`【${scriptName}】抓包 User-Agent: ${baseUA.substring(0, 100)}`);
-      console.log(`【${scriptName}】抓包 请求头数: ${Object.keys(headersMap).length}`);
-
       const paramsRaw = parseRawQuery(url);
       const store = loadStore();
       const fp = fingerprintOf(paramsRaw);
       const now = Date.now();
       const existed = !!store.accounts[fp];
-      
-      // 记录抓到的重要参数
-      const email = paramsRaw.email ? decodeURIComponent(paramsRaw.email) : '无email';
-      console.log(`【${scriptName}】抓包 email: ${email}, fingerprint: ${fp}, 是否已存在: ${existed}`);
 
       if (!existed) {
-        store.accounts[fp] = {
-          id: fp, alias: `账号${store.order.length + 1}`, userName: '',
-          uaSeed: store.order.length, baseUA: baseUA,
-          capture: { url, paramsRaw, headers: headersMap },
-          createdAt: now, updatedAt: now
-        };
+        store.accounts[fp] = { id: fp, alias: `账号${store.order.length + 1}`, userName: '', uaSeed: store.order.length, baseUA, capture: { url, paramsRaw, headers: headersMap }, createdAt: now, updatedAt: now };
         store.order.push(fp);
         saveStore(store);
         notify('✅ 新账号已入库', `${accountDisplayName(store.accounts[fp])}\n当前账号总数：${store.order.length}`);
@@ -476,41 +404,24 @@ export default async function(ctx) {
         saveStore(store);
         notify('🔄 账号参数已更新', `${accountDisplayName(store.accounts[fp])}\n当前账号总数：${store.order.length}`);
       }
-    } catch (e) {
-      console.log(`【${scriptName}】抓包异常: ${e.message || String(e)}`);
-      console.log(`【${scriptName}】抓包异常堆栈: ${e.stack || '无'}`);
-    }
+    } catch (e) {}
     return;
-
   } else {
-    // --- 定时任务模式：签到 ---
     try {
       const store = loadStore();
       const ids = store.order.filter(id => store.accounts[id]);
-      console.log(`【${scriptName}】定时任务启动, 存储中的账号数: ${ids.length}`);
-      
-      if (!ids.length) {
-        notify('⚠️ 未抓到任何账号', '请先打开 PingMe 触发抓包');
-        return;
-      }
-
+      if (!ids.length) { notify('⚠️ 未抓到任何账号', '请先打开 PingMe 触发抓包'); return; }
       const total = ids.length;
       const results = [];
       for (let idx = 0; idx < ids.length; idx++) {
-        const acc = store.accounts[ids[idx]];
-        const email = acc.capture?.paramsRaw?.email ? decodeURIComponent(acc.capture.paramsRaw.email) : '未知';
-        console.log(`【${scriptName}】处理账号 ${idx+1}/${total}: ${email}`);
-        const text = await runAccount(acc, idx, total);
+        const text = await runAccount(store.accounts[ids[idx]], idx, total);
         results.push(text);
         saveStore(store);
         if (idx < ids.length - 1) await sleep(ACCOUNT_GAP);
       }
       saveStore(store);
       notify(`🎉 全部完成 (${total}个账号)`, results.join('\n———\n'));
-      console.log(`【${scriptName}】定时任务完成`);
-    } catch (err) {
-      console.log(`【${scriptName}】任务异常: ${err.message || String(err)}`);
-    }
+    } catch (err) {}
     return;
   }
 }
