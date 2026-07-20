@@ -262,11 +262,18 @@ try {
 
   /**
    * PingMe
-   * 开关：存储 #pingme_switch = false 关闭，不设或 true 开启
+   * 开关：模块 arg2 或存储 #pingme_switch = false 关闭，不设或 true 开启
    */
   if (req_url.includes("/app/queryBalanceAndBonus")) {
-    const pingmeSwitch = $.read('#pingme_switch');
-    if (pingmeSwitch === 'false') {
+    // 检查开关：模块 env > 存储 > 默认开启
+    const envVal = typeof $environment !== 'undefined' ? $environment.arg2 : undefined;
+    const storageVal = $.read('#pingme_switch');
+    const isEnabled = envVal !== undefined
+      ? envVal !== 'false'
+      : storageVal !== null
+        ? storageVal !== 'false'
+        : true;
+    if (!isEnabled) {
       console.log('⏸ PingMe 已关闭，跳过抓参');
       $.done();
       return;
