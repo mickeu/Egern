@@ -29,7 +29,7 @@ scriptings:
 - schedule:
     name: PingMe签到任务
     cron: 0 8,20 * * *
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/PingMeSignin.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/main/PingMeSignin.js
     timeout: 1000
 - http_request:
     name: PingMe (token）
