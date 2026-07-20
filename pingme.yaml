@@ -38,7 +38,7 @@ scriptings:
 - http_request:
     name: PingMe获取签到参数
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/1a975fe/pingme_capture.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/501ef9f/pingme_capture.js
     timeout: 60
 mitm:
   hostnames:
