@@ -36,12 +36,12 @@ scriptings:
 - schedule:
     name: PingMe签到
     cron: 30 8,20 * * *
-    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
     timeout: 300
 - http_request:
     name: PingMe获取签到参数
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
     timeout: 60
 mitm:
   hostnames:
