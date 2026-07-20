@@ -1,26 +1,8 @@
 name: PingMe签到
-description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | 🤫 mickeu 修改为 Egern 版 | 😀 已支持 🎈Egern | 😀 测试了Egern，其他平台不支持
+description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | mickeu修改为支持 🎈Egern | 😀 测试了Egern，其他平台报错反馈
 compat_arguments:
-  arg1: 'true'
-  arg2: 'true'
-  arg3: 0 8,20 * * *
   PROXY: PROXY
 compat_arguments_schema:
-  arg1:
-    name: PingMe任务
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  arg2:
-    name: PMtoken
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  arg3:
-    name: PM定时
-    default_value: 0 8,20 * * *
   PROXY:
     name: PROXY
     description: 代理规则使用的策略
@@ -43,12 +25,12 @@ scriptings:
 - schedule:
     name: PingMe签到
     cron: 30 8,20 * * *
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
     timeout: 300
 - http_request:
     name: PingMe获取签到参数
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
     timeout: 60
 mitm:
   hostnames:
