@@ -1,5 +1,5 @@
-name: PingMe
-description: PingMe每日签到，支持多账号。分流指定到包含所有节点的round-robin策略组。多账号使用方法：打开获取token开关登录不同的账号，点击我的页面。⚠️不要从app里面直接退出登录，卸载app重新安装，登录另一个需要签到的账号，以此类推
+name: PingMe签到
+description: PingMe 自动化签到+视频奖励（fmz200版）
 compat_arguments:
   arg1: 'true'
   arg2: 'true'
@@ -34,15 +34,15 @@ rules:
     policy: PROXY
 scriptings:
 - schedule:
-    name: PingMe签到任务
-    cron: 0 8,20 * * *
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
-    timeout: 1000
-- http_request:
-    name: PingMe (token）
-    match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
+    name: PingMe签到
+    cron: 30 8,20 * * *
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
     timeout: 300
+- http_request:
+    name: PingMe获取签到参数
+    match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
+    timeout: 60
 mitm:
   hostnames:
     includes:
