@@ -1,5 +1,5 @@
 name: PingMe
-description: PingMe每日签到
+description: PingMe每日签到，支持多账号。分流指定到包含所有节点的round-robin策略组。多账号使用方法：打开获取token开关登录不同的账号，点击我的页面。⚠️不要从app里面直接退出登录，卸载app重新安装，登录另一个需要签到的账号，以此类推
 compat_arguments:
   arg2: 'true'
   arg3: 0 8,20 * * *
@@ -38,3 +38,5 @@ scriptings:
     timeout: 300
 mitm:
   hostnames:
+    includes:
+    - api.pingmeapp.net
