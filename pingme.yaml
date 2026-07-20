@@ -1,24 +1,28 @@
-name: PingMe
-description: PingMe每日签到，支持多账号。分流指定到包含所有节点的round-robin策略组。多账号使用方法：打开获取token开关登录不同的账号，点击我的页面。⚠️不要从app里面直接退出登录，卸载app重新安装，登录另一个需要签到的账号，以此类推
+name: PingMe签到
+description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | mickeu修改为支持 🎈Egern | 😀 测试了Egern，其他平台报错反馈
 compat_arguments:
   arg2: 'true'
-  arg3: 0 8,20 * * *
   PROXY: PROXY
 compat_arguments_schema:
   arg2:
     name: PM'token
+    description: 关闭后不再抓取签到参数
     default_value: 'true'
     options:
     - 'true'
     - 'false'
-  arg3:
-    name: PM定时
-    default_value: 0 8,20 * * *
   PROXY:
     name: PROXY
     description: 代理规则使用的策略
     default_value: PROXY
-author: 怎么肥事[https://t.me/Nzmgs] luckyday[https://t.me/blessedday_bot]
+    options:
+    - PROXY
+    - DIRECT
+    - 手动选择
+    - 自动选择
+    - 故障转移
+    - 负载均衡
+author: mickeu 修改为Egern版
 icon: https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme&wetalk.png
 dns: {}
 rules:
@@ -27,15 +31,15 @@ rules:
     policy: PROXY
 scriptings:
 - schedule:
-    name: PingMe签到任务
-    cron: 0 8,20 * * *
+    name: PingMe签到
+    cron: 30 8,20 * * *
     script_url: https://raw.githubusercontent.com/mickeu/Egern/main/PingMeSignin.js
-    timeout: 1000
+    timeout: 300
 - http_request:
-    name: PingMe (token）
+    name: PingMe获取签到参数
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
     script_url: https://raw.githubusercontent.com/mickeu/Egern/main/get_cookie.js
-    timeout: 300
+    timeout: 60
 mitm:
   hostnames:
     includes:
