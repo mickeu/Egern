@@ -1,12 +1,8 @@
 name: PingMe签到
 description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | mickeu修改为支持 🎈Egern | 😀 
 compat_arguments:
-  arg3: '30 8,20 * * *'
   PROXY: PROXY
 compat_arguments_schema:
-  arg3:
-    name: PM定时
-    default_value: '30 8,20 * * *'
   PROXY:
     name: PROXY
     description: 代理规则使用的策略
@@ -38,7 +34,7 @@ rules:
 scriptings:
 - schedule:
     name: PingMe签到
-    cron: '{{arg3}}'
+    cron: 30 8,20 * * *
     script_url: https://raw.githubusercontent.com/mickeu/Egern/main/PingMeSignin.js
     timeout: 300
 - http_request:
