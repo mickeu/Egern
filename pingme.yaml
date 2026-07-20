@@ -1,12 +1,9 @@
-name: PingMe&WeTalk
-description: PingMe跟WeTalk每日签到，支持多账号。分流指定到包含所有节点的round-robin策略组。多账号使用方法：打开获取token开关登录不同的账号，点击我的页面。⚠️不要从app里面直接退出登录，卸载app重新安装，登录另一个需要签到的账号，以此类推
+name: PingMe
+description: PingMe每日签到，支持多账号。分流指定到包含所有节点的round-robin策略组。多账号使用方法：打开获取token开关登录不同的账号，点击我的页面。⚠️不要从app里面直接退出登录，卸载app重新安装，登录另一个需要签到的账号，以此类推
 compat_arguments:
   arg1: 'true'
   arg2: 'true'
-  arg3: 'true'
-  arg4: 'true'
-  arg5: 0 */4 * * *
-  arg6: 30 8,20 * * *
+  arg3: 0 */4 * * *
   PROXY: PROXY
 compat_arguments_schema:
   arg1:
@@ -16,29 +13,14 @@ compat_arguments_schema:
     - 'true'
     - 'false'
   arg2:
-    name: WeTalk任务
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  arg3:
     name: PM'token
     default_value: 'true'
     options:
     - 'true'
     - 'false'
-  arg4:
-    name: WT'token
-    default_value: 'true'
-    options:
-    - 'true'
-    - 'false'
-  arg5:
+  arg3:
     name: PM定时
     default_value: 0 */4 * * *
-  arg6:
-    name: WT定时
-    default_value: 30 8,20 * * *
   PROXY:
     name: PROXY
     description: 代理规则使用的策略
@@ -54,25 +36,14 @@ scriptings:
 - schedule:
     name: PingMe签到任务
     cron: 0 */4 * * *
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/refs/heads/main/pingme_egern.js?v=4
     timeout: 1000
-- schedule:
-    name: WeTalk签到任务
-    cron: 30 8,20 * * *
-    script_url: https://raw.githubusercontent.com/3183339668/Egern/refs/heads/main/wetalk.js
-    timeout: 600
 - http_request:
     name: PingMe (token）
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
     script_url: https://raw.githubusercontent.com/3183339668/Egern/refs/heads/main/pingme.js
     timeout: 300
-- http_request:
-    name: WeTalk（token）
-    match: ^https:\/\/api\.wetalkapp\.com\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/3183339668/Egern/refs/heads/main/wetalk.js
-    timeout: 300
 mitm:
   hostnames:
     includes:
     - api.pingmeapp.net
-    - api.wetalkapp.com
