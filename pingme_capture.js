@@ -10,7 +10,14 @@ export default async function(ctx) {
     const url = ctx.request.url;
     console.log('PingMe 开始: ' + url);
 
-    // 解析 URL 参数
+    const h = ctx.request.headers;
+    const headers = {};
+    const names = ['Host', 'Accept', 'Content-Type', 'Cookie', 'Authorization', 'User-Agent', 'Accept-Language', 'Accept-Encoding', 'Connection', 'Origin', 'Referer'];
+    for (const name of names) {
+        const val = h.get(name);
+        if (val) headers[name] = val;
+    }
+
     const queryStr = url.split('?')[1] || '';
     const paramsRaw = {};
     queryStr.split('&').forEach(pair => {
@@ -20,8 +27,7 @@ export default async function(ctx) {
         paramsRaw[pair.slice(0, idx)] = decodeURIComponent(pair.slice(idx + 1));
     });
 
-    const capture = { url, headers: {}, paramsRaw };
-    ctx.storage.setJSON(ckKey, capture);
+    ctx.storage.setJSON(ckKey, { url, headers, paramsRaw });
     console.log('✅ PingMe 参数已保存');
     ctx.notify({ title: 'PingMe 获取成功✅', body: '现在你可以禁用此配置了' });
 }
