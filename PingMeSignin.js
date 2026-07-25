@@ -7,8 +7,8 @@
 
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
-const MAX_VIDEO = 3;
-const VIDEO_DELAY = 15000;
+const MAX_VIDEO = 5;
+const VIDEO_DELAY = 25000;
 
 export default async function(ctx) {
   const logs = [];
