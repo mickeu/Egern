@@ -1,21 +1,20 @@
 /*
 @Name: PingMe 自动化签到+视频奖励 (Egern版)
-@Author: 怎么肥事 / 奶思
-@Converted: Minis for Egern v2
-@Date: 2026-04-17
+@Author: 怎么肥事 / 奶思 / fmz200
+@Converted: mickeu for Egern
+@Date: 2026-07-25
 */
 
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
-const VIDEO_DELAY = 10000;
+const VIDEO_DELAY = 8000;
 
 export default async function(ctx) {
   const logs = [];
-  const notify = (msg) => logs.push(msg);
+  const addLog = (msg) => logs.push(msg);
 
   try {
-    // 1. 读取存储的凭证
     const raw = ctx.storage.get(ckKey);
     if (!raw) {
       ctx.notify({ title: '❌ PingMe签到', body: '请先获取PingMe签到参数，打开PingMe触发一次' });
@@ -30,78 +29,70 @@ export default async function(ctx) {
       return;
     }
 
-    notify('开始运行签到');
+    addLog('开始运行签到');
     const headers = buildHeaders(capture);
-    // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
-    const fakeDeviceId = genFakeDeviceId();
 
-    async function fetchApi(path, useFakeId) {
-      const overrideId = useFakeId ? fakeDeviceId : null;
-      const url = buildUrl(path, capture, overrideId);
+    async function fetchApi(path) {
+      const url = buildUrl(path, capture);
       const resp = await ctx.http.get(url, { headers });
       return await resp.json();
     }
 
-    // 2. 查询余额
+    // 查询余额
     try {
       const d = await fetchApi('queryBalanceAndBonus');
       if (d.retcode === 0) {
-        notify(`💰 运行前余额：${d.result.balance} Coins`);
+        addLog(`💰 运行前余额：${d.result.balance} Coins`);
       } else {
-        notify(`⚠️ 查询：${d.retmsg}`);
+        addLog(`⚠️ 查询：${d.retmsg}`);
       }
     } catch (e) {
-      notify('❌ 查询余额失败');
+      addLog('❌ 查询余额失败');
     }
 
-    // 3. 签到
+    // 签到
     try {
       const d = await fetchApi('checkIn');
       if (d.retcode === 0) {
         const hint = (d.result?.bonusHint || d.retmsg || '').replace(/\n/g, ' ');
-        notify(`✅ 签到：${hint}`);
+        addLog(`✅ 签到：${hint}`);
       } else {
-        notify(`⚠️ 签到：${d.retmsg}`);
-        // 如果签到提示已签到/参数过期，尝试重新抓参
+        addLog(`⚠️ 签到：${d.retmsg}`);
         if (d.retmsg && d.retmsg.includes('今天已经签过到')) {
-          notify('💡 提示：如果连续几天都显示"已签到"但余额没变，说明参数过期了');
-          notify('💡 请打开PingMe App重新触发抓参');
+          addLog('💡 提示：如果连续几天都显示"已签到"但余额没变，说明参数过期了');
+          addLog('💡 请打开PingMe App重新触发抓参');
         }
       }
     } catch (e) {
-      notify('❌ 签到失败');
+      addLog('❌ 签到失败');
     }
 
-    // 4. 视频奖励循环
+    // 视频奖励
     for (let i = 1; i <= MAX_VIDEO; i++) {
       await sleep(i === 1 ? 3000 : VIDEO_DELAY);
-
       try {
-        const d = await fetchApi('videoBonus', true);
+        const d = await fetchApi('videoBonus');
         if (d.retcode === 0) {
-          notify(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
+          addLog(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
         } else {
-          notify(`⏸ 视频${i}：${d.retmsg} (code:${d.retcode})`);
-          // 如果第一次就失败，不再继续
+          addLog(`⏸ 视频${i}：${d.retmsg} (code:${d.retcode})`);
           if (i === 1) break;
         }
       } catch (e) {
-        notify(`❌ 视频${i}：请求失败`);
+        addLog(`❌ 视频${i}：请求失败`);
         break;
       }
     }
 
-    // 5. 查询最终余额
+    // 查询最终余额
     try {
       const d = await fetchApi('queryBalanceAndBonus');
       if (d.retcode === 0) {
         logs.unshift(`💰 最新余额：${d.result.balance} Coins`);
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
 
-    // 6. 发送通知
+    // 发送通知
     ctx.notify({
       title: '🎉 PingMe签到完成',
       body: logs.join('\n'),
@@ -122,32 +113,19 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function randHex(n) {
-  let s = '';
-  for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16);
-  return s.toUpperCase();
-}
-
-function genFakeDeviceId() {
-  return `${randHex(8)}-${randHex(4)}-${randHex(4)}-${randHex(4)}-${randHex(12)}PingMeIOS`;
-}
-
-function buildSignedParamsRaw(capture, overrideDeviceId) {
+function buildSignedParamsRaw(capture) {
   const params = {};
   Object.keys(capture.paramsRaw || {}).forEach(k => {
     if (k !== 'sign' && k !== 'signDate') params[k] = capture.paramsRaw[k];
   });
-  if (overrideDeviceId && params.uniquedeviceid) {
-    params.uniquedeviceid = overrideDeviceId;
-  }
   params.signDate = getUTCSignDate();
   const signBase = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&');
   params.sign = MD5(signBase + SECRET);
   return params;
 }
 
-function buildUrl(path, capture, overrideDeviceId) {
-  const params = buildSignedParamsRaw(capture, overrideDeviceId);
+function buildUrl(path, capture) {
+  const params = buildSignedParamsRaw(capture);
   const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
   return `https://api.pingmeapp.net/app/${path}?${qs}`;
 }
@@ -160,7 +138,6 @@ function buildHeaders(capture) {
     }
   });
   headers['Host'] = 'api.pingmeapp.net';
-  headers['Accept'] = headers['Accept'] || 'application/json';
   return headers;
 }
 
@@ -203,8 +180,8 @@ function MD5(string) {
     const lWordCount = (lByteCount - (lByteCount % 4)) / 4;
     lBytePosition = (lByteCount % 4) * 8;
     lWordArray[lWordCount] |= 0x80 << lBytePosition;
-    lWordArray[lNumberOfWords - 2] = lMessageLength << 3;
-    lWordArray[lNumberOfWords - 1] = lMessageLength >>> 29;
+    lWordArray[lNumberOfWords - 1] = lMessageLength << 3;
+    lWordArray[lNumberOfWords - 2] = lMessageLength >>> 29;
     return lWordArray;
   }
   function WordToHex(lValue) {
@@ -226,70 +203,22 @@ function MD5(string) {
   a = 0x67452301; b = 0xEFCDAB89; c = 0x98BADCFE; d = 0x10325476;
   for (k = 0; k < x.length; k += 16) {
     AA = a; BB = b; CC = c; DD = d;
-    a = FF(a, b, c, d, x[k + 0], S11, 0xD76AA478);
-    d = FF(d, a, b, c, x[k + 1], S12, 0xE8C7B756);
-    c = FF(c, d, a, b, x[k + 2], S13, 0x242070DB);
-    b = FF(b, c, d, a, x[k + 3], S14, 0xC1BDCEEE);
-    a = FF(a, b, c, d, x[k + 4], S11, 0xF57C0FAF);
-    d = FF(d, a, b, c, x[k + 5], S12, 0x4787C62A);
-    c = FF(c, d, a, b, x[k + 6], S13, 0xA8304613);
-    b = FF(b, c, d, a, x[k + 7], S14, 0xFD469501);
-    a = FF(a, b, c, d, x[k + 8], S11, 0x698098D8);
-    d = FF(d, a, b, c, x[k + 9], S12, 0x8B44F7AF);
-    c = FF(c, d, a, b, x[k + 10], S13, 0xFFFF5BB1);
-    b = FF(b, c, d, a, x[k + 11], S14, 0x895CD7BE);
-    a = FF(a, b, c, d, x[k + 12], S11, 0x6B901122);
-    d = FF(d, a, b, c, x[k + 13], S12, 0xFD987193);
-    c = FF(c, d, a, b, x[k + 14], S13, 0xA679438E);
-    b = FF(b, c, d, a, x[k + 15], S14, 0x49B40821);
-    a = GG(a, b, c, d, x[k + 1], S21, 0xF61E2562);
-    d = GG(d, a, b, c, x[k + 6], S22, 0xC040B340);
-    c = GG(c, d, a, b, x[k + 11], S23, 0x265E5A51);
-    b = GG(b, c, d, a, x[k + 0], S24, 0xE9B6C7AA);
-    a = GG(a, b, c, d, x[k + 5], S21, 0xD62F105D);
-    d = GG(d, a, b, c, x[k + 10], S22, 0x2441453);
-    c = GG(c, d, a, b, x[k + 15], S23, 0xD8A1E681);
-    b = GG(b, c, d, a, x[k + 4], S24, 0xE7D3FBC8);
-    a = GG(a, b, c, d, x[k + 9], S21, 0x21E1CDE6);
-    d = GG(d, a, b, c, x[k + 14], S22, 0xC33707D6);
-    c = GG(c, d, a, b, x[k + 3], S23, 0xF4D50D87);
-    b = GG(b, c, d, a, x[k + 8], S24, 0x455A14ED);
-    a = GG(a, b, c, d, x[k + 13], S21, 0xA9E3E905);
-    d = GG(d, a, b, c, x[k + 2], S22, 0xFCEFA3F8);
-    c = GG(c, d, a, b, x[k + 7], S23, 0x676F02D9);
-    b = GG(b, c, d, a, x[k + 12], S24, 0x8D2A4C8A);
-    a = HH(a, b, c, d, x[k + 5], S31, 0xFFFA3942);
-    d = HH(d, a, b, c, x[k + 8], S32, 0x8771F681);
-    c = HH(c, d, a, b, x[k + 11], S33, 0x6D9D6122);
-    b = HH(b, c, d, a, x[k + 14], S34, 0xFDE5380C);
-    a = HH(a, b, c, d, x[k + 1], S31, 0xA4BEEA44);
-    d = HH(d, a, b, c, x[k + 4], S32, 0x4BDECFA9);
-    c = HH(c, d, a, b, x[k + 7], S33, 0xF6BB4B60);
-    b = HH(b, c, d, a, x[k + 10], S34, 0xBEBFBC70);
-    a = HH(a, b, c, d, x[k + 13], S31, 0x289B7EC6);
-    d = HH(d, a, b, c, x[k + 0], S32, 0xEAA127FA);
-    c = HH(c, d, a, b, x[k + 3], S33, 0xD4EF3085);
-    b = HH(b, c, d, a, x[k + 6], S34, 0x4881D05);
-    a = HH(a, b, c, d, x[k + 9], S31, 0xD9D4D039);
-    d = HH(d, a, b, c, x[k + 12], S32, 0xE6DB99E5);
-    c = HH(c, d, a, b, x[k + 15], S33, 0x1FA27CF8);
-    b = HH(b, c, d, a, x[k + 2], S34, 0xC4AC5665);
-    a = II(a, b, c, d, x[k + 0], S41, 0xF4292244);
-    d = II(d, a, b, c, x[k + 7], S42, 0x432AFF97);
-    c = II(c, d, a, b, x[k + 14], S43, 0xAB9423A7);
-    b = II(b, c, d, a, x[k + 5], S44, 0xFC93A039);
-    a = II(a, b, c, d, x[k + 12], S41, 0x655B59C3);
-    d = II(d, a, b, c, x[k + 3], S42, 0x8F0CCC92);
-    c = II(c, d, a, b, x[k + 10], S43, 0xFFEFF47D);
-    b = II(b, c, d, a, x[k + 1], S44, 0x85845DD1);
-    a = II(a, b, c, d, x[k + 8], S41, 0x6FA87E4F);
-    d = II(d, a, b, c, x[k + 15], S42, 0xFE2CE6E0);
-    c = II(c, d, a, b, x[k + 6], S43, 0xA3014314);
-    b = II(b, c, d, a, x[k + 13], S44, 0x4E0811A1);
-    a = II(a, b, c, d, x[k + 4], S41, 0xF7537E82);
-    d = II(d, a, b, c, x[k + 11], S42, 0xBD3AF235);
-    c = II(c, d, a, b, x[k + 2], S43, 0x2AD7D2BB);
-    b = II(b, c, d, a, x[k + 9], S44, 0xEB86D391);
+    a = FF(a, b, c, d, x[k + 0], S11, 0xD76AA478); d = FF(d, a, b, c, x[k + 1], S12, 0xE8C7B756); c = FF(c, d, a, b, x[k + 2], S13, 0x242070DB); b = FF(b, c, d, a, x[k + 3], S14, 0xC1BDCEEE);
+    a = FF(a, b, c, d, x[k + 4], S11, 0xF57C0FAF); d = FF(d, a, b, c, x[k + 5], S12, 0x4787C62A); c = FF(c, d, a, b, x[k + 6], S13, 0xA8304613); b = FF(b, c, d, a, x[k + 7], S14, 0xFD469501);
+    a = FF(a, b, c, d, x[k + 8], S11, 0x698098D8); d = FF(d, a, b, c, x[k + 9], S12, 0x8B44F7AF); c = FF(c, d, a, b, x[k + 10], S13, 0xFFFF5BB1); b = FF(b, c, d, a, x[k + 11], S14, 0x895CD7BE);
+    a = FF(a, b, c, d, x[k + 12], S11, 0x6B901122); d = FF(d, a, b, c, x[k + 13], S12, 0xFD987193); c = FF(c, d, a, b, x[k + 14], S13, 0xA679438E); b = FF(b, c, d, a, x[k + 15], S14, 0x49B40821);
+    a = GG(a, b, c, d, x[k + 1], S21, 0xF61E2562); d = GG(d, a, b, c, x[k + 6], S22, 0xC040B340); c = GG(c, d, a, b, x[k + 11], S23, 0x265E5A51); b = GG(b, c, d, a, x[k + 0], S24, 0xE9B6C7AA);
+    a = GG(a, b, c, d, x[k + 5], S21, 0xD62F105D); d = GG(d, a, b, c, x[k + 10], S22, 0x2441453); c = GG(c, d, a, b, x[k + 15], S23, 0xD8A1E681); b = GG(b, c, d, a, x[k + 4], S24, 0xE7D3FBC8);
+    a = GG(a, b, c, d, x[k + 9], S21, 0x21E1CDE6); d = GG(d, a, b, c, x[k + 14], S22, 0xC33707D6); c = GG(c, d, a, b, x[k + 3], S23, 0xF4D50D87); b = GG(b, c, d, a, x[k + 8], S24, 0x455A14ED);
+    a = GG(a, b, c, d, x[k + 13], S21, 0xA9E3E905); d = GG(d, a, b, c, x[k + 2], S22, 0xFCEFA3F8); c = GG(c, d, a, b, x[k + 7], S23, 0x676F02D9); b = GG(b, c, d, a, x[k + 12], S24, 0x8D2A4C8A);
+    a = HH(a, b, c, d, x[k + 5], S31, 0xFFFA3942); d = HH(d, a, b, c, x[k + 8], S32, 0x8771F681); c = HH(c, d, a, b, x[k + 11], S33, 0x6D9D6122); b = HH(b, c, d, a, x[k + 14], S34, 0xFDE5380C);
+    a = HH(a, b, c, d, x[k + 1], S31, 0xA4BEEA44); d = HH(d, a, b, c, x[k + 4], S32, 0x4BDECFA9); c = HH(c, d, a, b, x[k + 7], S33, 0xF6BB4B60); b = HH(b, c, d, a, x[k + 10], S34, 0xBEBFBC70);
+    a = HH(a, b, c, d, x[k + 13], S31, 0x289B7EC6); d = HH(d, a, b, c, x[k + 0], S32, 0xEAA127FA); c = HH(c, d, a, b, x[k + 3], S33, 0xD4EF3085); b = HH(b, c, d, a, x[k + 6], S34, 0x4881D05);
+    a = HH(a, b, c, d, x[k + 9], S31, 0xD9D4D039); d = HH(d, a, b, c, x[k + 12], S32, 0xE6DB99E5); c = HH(c, d, a, b, x[k + 15], S33, 0x1FA27CF8); b = HH(b, c, d, a, x[k + 2], S34, 0xC4AC5665);
+    a = II(a, b, c, d, x[k + 0], S41, 0xF4292244); d = II(d, a, b, c, x[k + 7], S42, 0x432AFF97); c = II(c, d, a, b, x[k + 14], S43, 0xAB9423A7); b = II(b, c, d, a, x[k + 5], S44, 0xFC93A039);
+    a = II(a, b, c, d, x[k + 12], S41, 0x655B59C3); d = II(d, a, b, c, x[k + 3], S42, 0x8F0CCC92); c = II(c, d, a, b, x[k + 10], S43, 0xFFEFF47D); b = II(b, c, d, a, x[k + 1], S44, 0x85845DD1);
+    a = II(a, b, c, d, x[k + 8], S41, 0x6FA87E4F); d = II(d, a, b, c, x[k + 15], S42, 0xFE2CE6E0); c = II(c, d, a, b, x[k + 6], S43, 0xA3014314); b = II(b, c, d, a, x[k + 13], S44, 0x4E0811A1);
+    a = II(a, b, c, d, x[k + 4], S41, 0xF7537E82); d = II(d, a, b, c, x[k + 11], S42, 0xBD3AF235); c = II(c, d, a, b, x[k + 2], S43, 0x2AD7D2BB); b = II(b, c, d, a, x[k + 9], S44, 0xEB86D391);
     a = AddUnsigned(a, AA); b = AddUnsigned(b, BB); c = AddUnsigned(c, CC); d = AddUnsigned(d, DD);
   }
   return (WordToHex(a) + WordToHex(b) + WordToHex(c) + WordToHex(d)).toLowerCase();
