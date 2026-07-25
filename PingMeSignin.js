@@ -7,8 +7,8 @@
 
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
-const MAX_VIDEO = 5;
-const VIDEO_DELAY = 8000;
+const MAX_VIDEO = 3;
+const VIDEO_DELAY = 15000;
 
 export default async function(ctx) {
   const logs = [];
@@ -59,6 +59,11 @@ export default async function(ctx) {
         notify(`✅ 签到：${hint}`);
       } else {
         notify(`⚠️ 签到：${d.retmsg}`);
+        // 如果签到提示已签到/参数过期，尝试重新抓参
+        if (d.retmsg && d.retmsg.includes('今天已经签过到')) {
+          notify('💡 提示：如果连续几天都显示"已签到"但余额没变，说明参数过期了');
+          notify('💡 请打开PingMe App重新触发抓参');
+        }
       }
     } catch (e) {
       notify('❌ 签到失败');
@@ -66,8 +71,8 @@ export default async function(ctx) {
 
     // 4. 视频奖励循环
     for (let i = 1; i <= MAX_VIDEO; i++) {
-      // 首次延迟1.5s，后续8s
-      await sleep(i === 1 ? 1500 : VIDEO_DELAY);
+      // 首次延迟3s，后续15s（加大间隔避免被限速）
+      await sleep(i === 1 ? 3000 : VIDEO_DELAY);
 
       try {
         const d = await fetchApi('videoBonus');
