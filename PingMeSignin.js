@@ -8,7 +8,7 @@
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
-const VIDEO_DELAY = 60000;
+const VIDEO_DELAY = 10000;
 
 export default async function(ctx) {
   const logs = [];
@@ -32,9 +32,11 @@ export default async function(ctx) {
 
     notify('开始运行签到');
     const headers = buildHeaders(capture);
+    // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
+    const fakeDeviceId = genFakeDeviceId();
 
     async function fetchApi(path, useFakeId) {
-      const overrideId = useFakeId ? genFakeDeviceId() : null;
+      const overrideId = useFakeId ? fakeDeviceId : null;
       const url = buildUrl(path, capture, overrideId);
       const resp = await ctx.http.get(url, { headers });
       return await resp.json();
