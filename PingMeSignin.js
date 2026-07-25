@@ -25,7 +25,7 @@ $.nodeNotifyMsg = []; // nodeJS合并通知
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
-const VIDEO_DELAY = 8000;
+const VIDEO_DELAY = 10000;
 
 // 执行开始
 startTasks().then(r => $.done());
@@ -52,10 +52,12 @@ async function startTasks() {
 
     console.log("组装请求头");
     const headers = buildHeaders(capture);
+    const fakeDeviceId = genFakeDeviceId();
+    console.log('本次运行设备ID: ' + fakeDeviceId);
 
-    function fetchApi(path) {
-        // return $task.fetch({ url: buildUrl(path, capture), method: 'GET', headers });
-        return $.http.get({url: buildUrl(path, capture), headers: headers});
+    function fetchApi(path, useFakeId) {
+        const overrideId = useFakeId ? fakeDeviceId : null;
+        return $.http.get({url: buildUrl(path, capture, overrideId), headers: headers});
     }
 
     function doVideoLoop(count) {
@@ -66,7 +68,7 @@ async function startTasks() {
             return new Promise(resolve => {
                 setTimeout(() => {
                     i++;
-                    fetchApi('videoBonus').then(res => {
+                    fetchApi('videoBonus', true).then(res => {
                         try {
                             const d = JSON.parse(res.body);
                             if (d.retcode === 0) {
@@ -240,21 +242,34 @@ function parseRawQuery(url) {
     return rawMap;
 }
 
-function buildSignedParamsRaw(capture) {
+function buildSignedParamsRaw(capture, overrideDeviceId) {
     const params = {};
     Object.keys(capture.paramsRaw || {}).forEach(k => {
         if (k !== 'sign' && k !== 'signDate') params[k] = capture.paramsRaw[k];
     });
+    if (overrideDeviceId && params.uniquedeviceid) {
+        params.uniquedeviceid = overrideDeviceId;
+    }
     params.signDate = getUTCSignDate();
     const signBase = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&');
     params.sign = MD5(signBase + SECRET);
     return params;
 }
 
-function buildUrl(path, capture) {
-    const params = buildSignedParamsRaw(capture);
+function buildUrl(path, capture, overrideDeviceId) {
+    const params = buildSignedParamsRaw(capture, overrideDeviceId);
     const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
     return `https://api.pingmeapp.net/app/${path}?${qs}`;
+}
+
+function randHex(n) {
+    let s = '';
+    for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16);
+    return s.toUpperCase();
+}
+
+function genFakeDeviceId() {
+    return `${randHex(8)}-${randHex(4)}-${randHex(4)}-${randHex(4)}-${randHex(12)}PingMeIOS`;
 }
 
 function cloneHeaders(headers) {
