@@ -72,7 +72,6 @@ export default async function(ctx) {
 
     // 4. 视频奖励循环
     for (let i = 1; i <= MAX_VIDEO; i++) {
-      // 首次延迟3s，后续15s（加大间隔避免被限速）
       await sleep(i === 1 ? 3000 : VIDEO_DELAY);
 
       try {
@@ -80,8 +79,9 @@ export default async function(ctx) {
         if (d.retcode === 0) {
           notify(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
         } else {
-          notify(`⏸ 视频${i}：${d.retmsg}`);
-          break; // 视频奖励失败则停止后续
+          notify(`⏸ 视频${i}：${d.retmsg} (code:${d.retcode})`);
+          // 如果第一次就失败，不再继续
+          if (i === 1) break;
         }
       } catch (e) {
         notify(`❌ 视频${i}：请求失败`);
