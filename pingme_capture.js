@@ -26,6 +26,7 @@ export default async function(ctx) {
             headers: normalizeHeaderNameMap(headers)
         };
         ctx.storage.set(ckKey, JSON.stringify(capture));
+        ctx.notify({ title: '✅ PingMe 获取成功', body: '现在可以关闭抓参了', sound: true });
         console.log('PingMe 获取到的内容为：' + url);
     }
 }
