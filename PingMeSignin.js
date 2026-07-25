@@ -141,7 +141,6 @@ function buildSignedParamsRaw(capture, overrideDeviceId) {
 
 function buildUrl(path, capture, overrideDeviceId) {
   const params = buildSignedParamsRaw(capture, overrideDeviceId);
-  const params = buildSignedParamsRaw(capture);
   const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
   return `https://api.pingmeapp.net/app/${path}?${qs}`;
 }
