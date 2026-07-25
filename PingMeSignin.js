@@ -8,7 +8,7 @@
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
-const VIDEO_DELAY = 8000;
+const VIDEO_DELAY = 10000;
 
 export default async function(ctx) {
   const logs = [];
@@ -31,9 +31,11 @@ export default async function(ctx) {
 
     addLog('开始运行签到');
     const headers = buildHeaders(capture);
+    const fakeDeviceId = genFakeDeviceId();
 
-    async function fetchApi(path) {
-      const url = buildUrl(path, capture);
+    async function fetchApi(path, useFakeId) {
+      const overrideId = useFakeId ? fakeDeviceId : null;
+      const url = buildUrl(path, capture, overrideId);
       const resp = await ctx.http.get(url, { headers });
       return await resp.json();
     }
@@ -71,7 +73,7 @@ export default async function(ctx) {
     for (let i = 1; i <= MAX_VIDEO; i++) {
       await sleep(i === 1 ? 3000 : VIDEO_DELAY);
       try {
-        const d = await fetchApi('videoBonus');
+        const d = await fetchApi('videoBonus', true);
         if (d.retcode === 0) {
           addLog(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
         } else {
@@ -113,18 +115,32 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function buildSignedParamsRaw(capture) {
+function randHex(n) {
+  let s = '';
+  for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16);
+  return s.toUpperCase();
+}
+
+function genFakeDeviceId() {
+  return `${randHex(8)}-${randHex(4)}-${randHex(4)}-${randHex(4)}-${randHex(12)}PingMeIOS`;
+}
+
+function buildSignedParamsRaw(capture, overrideDeviceId) {
   const params = {};
   Object.keys(capture.paramsRaw || {}).forEach(k => {
     if (k !== 'sign' && k !== 'signDate') params[k] = capture.paramsRaw[k];
   });
+  if (overrideDeviceId && params.uniquedeviceid) {
+    params.uniquedeviceid = overrideDeviceId;
+  }
   params.signDate = getUTCSignDate();
   const signBase = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&');
   params.sign = MD5(signBase + SECRET);
   return params;
 }
 
-function buildUrl(path, capture) {
+function buildUrl(path, capture, overrideDeviceId) {
+  const params = buildSignedParamsRaw(capture, overrideDeviceId);
   const params = buildSignedParamsRaw(capture);
   const qs = Object.keys(params).map(k => `${k}=${encodeURIComponent(params[k])}`).join('&');
   return `https://api.pingmeapp.net/app/${path}?${qs}`;
