@@ -39,13 +39,15 @@ scriptings:
 - schedule:
     name: PingMe签到
     cron: '{{{arg3}}}'
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/main/PingMeSignin.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/main/PingMeSignin.js?t=2
     timeout: 300
+    update_interval: 3600
 - http_request:
     name: PingMe获取签到参数
     match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-    script_url: https://raw.githubusercontent.com/mickeu/Egern/main/pingme_capture.js
+    script_url: https://raw.githubusercontent.com/mickeu/Egern/main/pingme_capture.js?t=2
     timeout: 60
+    update_interval: 3600
 mitm:
   hostnames:
     includes:
