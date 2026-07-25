@@ -153,6 +153,7 @@ function buildHeaders(capture) {
     }
   });
   headers['Host'] = 'api.pingmeapp.net';
+  headers['Accept'] = headers['Accept'] || 'application/json';
   return headers;
 }
 
