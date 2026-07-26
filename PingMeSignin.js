@@ -30,6 +30,7 @@ export default async function(ctx) {
       return;
     }
 
+    console.log("PingMe签到, 开始!");
     notify('开始运行签到');
     const headers = buildHeaders(capture);
     // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
@@ -46,8 +47,10 @@ export default async function(ctx) {
     try {
       const d = await fetchApi('queryBalanceAndBonus');
       if (d.retcode === 0) {
+        console.log(`💰 运行前余额：${d.result.balance} Coins`);
         notify(`💰 运行前余额：${d.result.balance} Coins`);
       } else {
+        console.log(`⚠️ 查询：${d.retmsg}`);
         notify(`⚠️ 查询：${d.retmsg}`);
       }
     } catch (e) {
@@ -59,8 +62,10 @@ export default async function(ctx) {
       const d = await fetchApi('checkIn');
       if (d.retcode === 0) {
         const hint = (d.result?.bonusHint || d.retmsg || '').replace(/\n/g, ' ');
+        console.log(`✅ 签到：${hint}`);
         notify(`✅ 签到：${hint}`);
       } else {
+        console.log(`⚠️ 签到：${d.retmsg}`);
         notify(`⚠️ 签到：${d.retmsg}`);
         // 如果签到提示已签到/参数过期，尝试重新抓参
         if (d.retmsg && d.retmsg.includes('今天已经签过到')) {
