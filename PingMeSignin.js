@@ -35,6 +35,7 @@ export default async function(ctx) {
     const headers = buildHeaders(capture);
     // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
     const fakeDeviceId = genFakeDeviceId();
+    console.log(`PingMe 签到本次运行设备ID:${fakeDeviceId}`);
 
     async function fetchApi(path, useFakeId) {
       const overrideId = useFakeId ? fakeDeviceId : null;
