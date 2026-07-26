@@ -1,5 +1,5 @@
 name: PingMe签到
-description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | mickeu修改为支持 🎈Egern | 😀 测试了Egern，其他平台报错反馈
+description: 😀 新增PingMe签到 | 🤫 支持获取签到参数和每日签到&任务 | 🤫 原作者 @ZenMoFiShi | mickeu修改为支持 🎈Egern | 😀 
 compat_arguments:
   arg3: '30 8,20 * * *'
   PROXY: PROXY
