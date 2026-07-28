@@ -1,6 +1,6 @@
 /*
-@Name: PingMe 自动化签到+视频奖励 (Egern版)
-@Author: 怎么肥事 / 奶思
+@Name: PingMe 自动化签到+视频奖励 ( Mickeu 修改为Egern专用版)
+@Author: 怎么肥事 / 奶思 
 @Converted: Minis for Egern v2
 @Date: 2026-04-17
 */
