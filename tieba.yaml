@@ -1,50 +1,50 @@
 name: 🐻 百度贴吧 [签到]
 description: |-
-  每日定时签到，打开百度贴吧APP点击"我的"即可获取cookie.
-  支持开启/关闭Cookie获取和MITM。
+  每日定时签到｜Egern原生版
+  打开百度贴吧APP点击"我的"即可获取Cookie.
+  支持开关Cookie获取，关闭后不再抓取。
 compat_arguments:
-  cookie_disabled: 'false'
-  mitm_host1: c.tieba.baidu.com
-  mitm_host2: tiebac.baidu.com
+  mitm_host1: 'c.tieba.baidu.com'
+  mitm_host2: 'tiebac.baidu.com'
   sign_cron: '30 0,12 * * *'
 compat_arguments_schema:
-  cookie_disabled:
+  mitm_host1:
+    name: MITM域名
+    description: 清空即可关闭MITM
+  mitm_host2:
+    name: ''
+  sign_cron:
+    name: 签到时间
+    description: Cron表达式，默认每天 0:30 和 12:30 签到
+    default_value: '30 0,12 * * *'
+env:
+  COOKIE_ENABLED: 'true'
+env_schema:
+  COOKIE_ENABLED:
     name: 获取Cookie
     description: 关闭后不再抓取Cookie（需先打开一次贴吧App获取Cookie）
     options:
     - 'true'
     - 'false'
-  mitm_host1:
-    name: MITM域名
-    description: 关闭后移除MITM域名
-    default_value: c.tieba.baidu.com
-  mitm_host2:
-    name: ''
-    default_value: tiebac.baidu.com
-  sign_cron:
-    name: 签到时间
-    description: Cron表达式，默认每天 0:30 和 12:30 签到
-    default_value: '30 0,12 * * *'
 author: mickeu 修改为Egern版
 icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Action/Baidu_Tieba.png
 dns: {}
 
 scriptings:
   - http_request:
-      name: "百度贴吧[Cookie]"
-      match: "^https?://(c\\.tieba|tiebac)\\.baidu\\.com/c/s/login"
-      script_url: "https://raw.githubusercontent.com/NobyDa/Script/master/BDTieBa-DailyBonus/TieBa.js"
+      name: '百度贴吧[Cookie]'
+      match: '^https?://(c\.tieba|tiebac)\.baidu\.com/c/s/login'
+      script_url: 'https://raw.githubusercontent.com/mickeu/Egern/main/TieBa.js'
       timeout: 60
-      disabled: {{{cookie_disabled}}}
   - schedule:
-      name: "百度贴吧[签到]"
-      cron: "{{{sign_cron}}}"
-      script_url: "https://raw.githubusercontent.com/NobyDa/Script/master/BDTieBa-DailyBonus/TieBa.js"
+      name: '百度贴吧[签到]'
+      cron: '{{{sign_cron}}}'
+      script_url: 'https://raw.githubusercontent.com/mickeu/Egern/main/TieBa.js'
       timeout: 600
       update_interval: 0
 
 mitm:
   hostnames:
     includes:
-      - "{{{mitm_host1}}}"
-      - "{{{mitm_host2}}}"
+      - '{{{mitm_host1}}}'
+      - '{{{mitm_host2}}}'
