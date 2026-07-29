@@ -28,3 +28,9 @@ scriptings:
       script_url: 'https://raw.githubusercontent.com/mickeu/Egern/main/TieBa.js'
       timeout: 600
       update_interval: 0
+
+mitm:
+  hostnames:
+    includes:
+      - c.tieba.baidu.com
+      - tiebac.baidu.com
