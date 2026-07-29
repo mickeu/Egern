@@ -3,20 +3,6 @@ description: |-
   每日定时签到｜Egern原生版
   打开百度贴吧APP点击"我的"即可获取Cookie.
   支持开关Cookie获取，关闭后不再抓取。
-compat_arguments:
-  mitm_host1: 'c.tieba.baidu.com'
-  mitm_host2: 'tiebac.baidu.com'
-  sign_cron: '30 0,12 * * *'
-compat_arguments_schema:
-  mitm_host1:
-    name: MITM域名
-    description: 清空即可关闭MITM
-  mitm_host2:
-    name: ''
-  sign_cron:
-    name: 签到时间
-    description: Cron表达式，默认每天 0:30 和 12:30 签到
-    default_value: '30 0,12 * * *'
 env:
   COOKIE_ENABLED: 'true'
 env_schema:
@@ -38,13 +24,7 @@ scriptings:
       timeout: 60
   - schedule:
       name: '百度贴吧[签到]'
-      cron: '{{{sign_cron}}}'
+      cron: '30 0,12 * * *'
       script_url: 'https://raw.githubusercontent.com/mickeu/Egern/main/TieBa.js'
       timeout: 600
       update_interval: 0
-
-mitm:
-  hostnames:
-    includes:
-      - '{{{mitm_host1}}}'
-      - '{{{mitm_host2}}}'
