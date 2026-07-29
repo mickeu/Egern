@@ -27,12 +27,7 @@ export default async function(ctx) {
 async function GetCookie(ctx) {
   var headerCookie = ctx.request.headers.get('Cookie') || ctx.request.headers.get('cookie');
   if (headerCookie && headerCookie.includes('BDUSS=')) {
-    var cookieVal = ctx.storage.get('CookieTB');
-    if (!cookieVal) {
-      ctx.notify({ title: '写入百度贴吧Cookie成功 🎉' });
-    } else {
-      console.log('写入百度贴吧Cookie成功 🎉');
-    }
+    ctx.notify({ title: '写入百度贴吧Cookie成功 🎉' });
     ctx.storage.set('CookieTB', headerCookie);
   } else {
     console.log('写入Cookie失败, BDUSS值缺失.');
