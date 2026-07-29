@@ -4,7 +4,8 @@ description: |-
   支持开启/关闭Cookie获取和MITM。
 compat_arguments:
   cookie_disabled: 'false'
-  mitm_disabled: 'false'
+  mitm_host1: c.tieba.baidu.com
+  mitm_host2: tiebac.baidu.com
   sign_cron: '30 0,12 * * *'
 compat_arguments_schema:
   cookie_disabled:
@@ -13,12 +14,13 @@ compat_arguments_schema:
     options:
     - 'true'
     - 'false'
-  mitm_disabled:
+  mitm_host1:
     name: MITM域名
-    description: 添加贴吧MITM域名（仅获取Cookie时需要）
-    options:
-    - 'true'
-    - 'false'
+    description: 关闭后移除MITM域名
+    default_value: c.tieba.baidu.com
+  mitm_host2:
+    name: ''
+    default_value: tiebac.baidu.com
   sign_cron:
     name: 签到时间
     description: Cron表达式，默认每天 0:30 和 12:30 签到
@@ -44,5 +46,5 @@ scriptings:
 mitm:
   hostnames:
     includes:
-      - c.tieba.baidu.com
-      - tiebac.baidu.com
+      - "{{{mitm_host1}}}"
+      - "{{{mitm_host2}}}"
