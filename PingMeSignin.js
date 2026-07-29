@@ -36,7 +36,7 @@ export default async function(ctx) {
     console.log("PingMe签到, 开始!");
     notify('开始运行签到');
     const headers = buildHeaders(capture);
-    // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
+    // 每次运行生成一个固定的伪造设备ID，整次运行所有视频都用同一个
     const fakeDeviceId = genFakeDeviceId();
     console.log(`PingMe 签到本次运行设备ID:${fakeDeviceId}`);
 
