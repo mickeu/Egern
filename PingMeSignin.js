@@ -36,6 +36,7 @@ export default async function(ctx) {
     console.log("PingMe签到, 开始!");
     notify('开始运行签到');
     const headers = buildHeaders(capture);
+    // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
     const fakeDeviceId = genFakeDeviceId();
     console.log(`PingMe 签到本次运行设备ID:${fakeDeviceId}`);
 
@@ -70,6 +71,7 @@ export default async function(ctx) {
       } else {
         console.log(`⚠️ 签到：${d.retmsg}`);
         notify(`⚠️ 签到：${d.retmsg}`);
+        // 如果签到提示已签到/参数过期，尝试重新抓参
         if (d.retmsg && d.retmsg.includes('今天已经签过到')) {
           notify('💡 提示：如果连续几天都显示"已签到"但余额没变，说明参数过期了');
           notify('💡 请打开PingMe App重新触发抓参');
@@ -89,6 +91,7 @@ export default async function(ctx) {
           notify(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
         } else {
           notify(`⏸ 视频${i}：${d.retmsg} (code:${d.retcode})`);
+          // 如果第一次就失败，不再继续
           if (i === 1) break;
         }
       } catch (e) {
