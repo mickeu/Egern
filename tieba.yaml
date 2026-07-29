@@ -1,0 +1,48 @@
+name: 🐻 百度贴吧 [签到]
+description: |-
+  每日定时签到，打开百度贴吧APP点击"我的"即可获取cookie.
+  支持开启/关闭Cookie获取和MITM。
+compat_arguments:
+  cookie_disabled: 'false'
+  mitm_disabled: 'false'
+  sign_cron: '30 0,12 * * *'
+compat_arguments_schema:
+  cookie_disabled:
+    name: 获取Cookie
+    description: 关闭后不再抓取Cookie（需先打开一次贴吧App获取Cookie）
+    options:
+    - 'true'
+    - 'false'
+  mitm_disabled:
+    name: MITM域名
+    description: 添加贴吧MITM域名（仅获取Cookie时需要）
+    options:
+    - 'true'
+    - 'false'
+  sign_cron:
+    name: 签到时间
+    description: Cron表达式，默认每天 0:30 和 12:30 签到
+    default_value: '30 0,12 * * *'
+author: mickeu 修改为Egern版
+icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Action/Baidu_Tieba.png
+dns: {}
+
+scriptings:
+  - http_request:
+      name: "百度贴吧[Cookie]"
+      match: "^https?://(c\\.tieba|tiebac)\\.baidu\\.com/c/s/login"
+      script_url: "https://raw.githubusercontent.com/NobyDa/Script/master/BDTieBa-DailyBonus/TieBa.js"
+      timeout: 60
+      disabled: {{{cookie_disabled}}}
+  - schedule:
+      name: "百度贴吧[签到]"
+      cron: "{{{sign_cron}}}"
+      script_url: "https://raw.githubusercontent.com/NobyDa/Script/master/BDTieBa-DailyBonus/TieBa.js"
+      timeout: 600
+      update_interval: 0
+
+mitm:
+  hostnames:
+    includes:
+      - c.tieba.baidu.com
+      - tiebac.baidu.com
