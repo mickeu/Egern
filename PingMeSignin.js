@@ -3,12 +3,15 @@
 @Author: 怎么肥事 / 奶思 
 @Converted: Minis for Egern v2
 @Date: 2026-04-17
+@Fix: 移除 duration:5 解决通知不显示在通知中心的问题
 */
 
 const ckKey = 'pingme_capture_v3';
 const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
 const VIDEO_DELAY = 10000;
+
+const NOTIFY_ICON = 'https://raw.githubusercontent.com/axhani/icon/refs/heads/main/pingme&wetalk.png';
 
 export default async function(ctx) {
   const logs = [];
@@ -33,7 +36,6 @@ export default async function(ctx) {
     console.log("PingMe签到, 开始!");
     notify('开始运行签到');
     const headers = buildHeaders(capture);
-    // 生成一个固定的伪造设备ID，整次运行所有视频都用同一个
     const fakeDeviceId = genFakeDeviceId();
     console.log(`PingMe 签到本次运行设备ID:${fakeDeviceId}`);
 
@@ -68,7 +70,6 @@ export default async function(ctx) {
       } else {
         console.log(`⚠️ 签到：${d.retmsg}`);
         notify(`⚠️ 签到：${d.retmsg}`);
-        // 如果签到提示已签到/参数过期，尝试重新抓参
         if (d.retmsg && d.retmsg.includes('今天已经签过到')) {
           notify('💡 提示：如果连续几天都显示"已签到"但余额没变，说明参数过期了');
           notify('💡 请打开PingMe App重新触发抓参');
@@ -88,7 +89,6 @@ export default async function(ctx) {
           notify(`🎬 视频${i}：+${d.result?.bonus || '?'} Coins`);
         } else {
           notify(`⏸ 视频${i}：${d.retmsg} (code:${d.retcode})`);
-          // 如果第一次就失败，不再继续
           if (i === 1) break;
         }
       } catch (e) {
@@ -107,19 +107,26 @@ export default async function(ctx) {
       // ignore
     }
 
-    // 6. 发送通知
+    // 6. 发送通知（修复：移除 duration，添加附件图标）
     ctx.notify({
       title: '🎉 PingMe签到完成',
       body: logs.join('\n'),
       sound: true,
-      duration: 5
+      attachment: {
+        url: NOTIFY_ICON,
+        mimeType: 'png'
+      }
     });
 
   } catch (err) {
     ctx.notify({
       title: '❌ PingMe签到失败',
       body: logs.join('\n') + '\n' + (err.message || String(err)),
-      sound: true
+      sound: true,
+      attachment: {
+        url: NOTIFY_ICON,
+        mimeType: 'png'
+      }
     });
   }
 }
