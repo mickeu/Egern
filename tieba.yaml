@@ -20,7 +20,7 @@ env_schema:
     - 'true'
     - 'false'
 author: mickeu 修改为Egern版
-icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Action/Baidu_Tieba.png
+icon: https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/CN_01.png
 dns: {}
 
 scriptings:
