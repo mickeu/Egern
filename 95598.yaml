@@ -54,7 +54,7 @@ scriptings:
   - schedule:
       name: 网上国网签到
       cron: '{{{sign_cron}}}'
-      script_url: https://raw.githubusercontent.com/mickeu/Egern/main/95598.js
+      script_url: https://raw.githubusercontent.com/mickeu/Egern/main/95598-egern.js
       timeout: 600
       update_interval: 0
 mitm:
