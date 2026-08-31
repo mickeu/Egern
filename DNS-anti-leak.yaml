@@ -1,0 +1,42 @@
+name: DNS防泄露修正
+description: 参照 Egern 官方 DNS 文档的防泄露配置。加 proxy_nameservers（代理DNS强制走境外DoH直连）+ DoH IP直连规则 + block_ips防污染。解决 DNS Leak Test 显示中国国旗问题。
+author: mickeu
+dns:
+  upstreams:
+    转发-DNS:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+  proxy_nameservers:
+  - https://1.1.1.1/dns-query
+  - https://8.8.8.8/dns-query
+  forward:
+  - domain_suffix:
+      match: apple.com
+      value: 转发-DNS
+      disabled: false
+  - domain_wildcard:
+      match: '*'
+      value: 转发-DNS
+      disabled: false
+  block_ips:
+  - 0.0.0.0
+  - 127.0.0.1
+  - 10.0.0.0/8
+rules:
+- or:
+    name: DNS上游直连
+    match:
+    - ip_cidr:
+        match: 1.1.1.1/32
+        no_resolve: true
+    - ip_cidr:
+        match: 8.8.8.8/32
+        no_resolve: true
+    - ip_cidr:
+        match: 1.0.0.1/32
+        no_resolve: true
+    - ip_cidr:
+        match: 8.8.4.4/32
+        no_resolve: true
+    policy: DIRECT
+    disabled: false
