@@ -1,0 +1,63 @@
+name: 网上国网签到
+description: |-
+  网上国网（95598）签到 + 电费账单查询 | Egern 原生版
+  在模块设置中填写网上国网App登录手机号和密码即可。
+  支持定时签到、查询电费账单、近期用量。
+  原作者：𝐎𝐍𝐙𝟑𝐕（Yuheng0101） | mickeu 适配 Egern ctx API
+compat_arguments:
+  sign_cron: '18 11 * * *'
+compat_arguments_schema:
+  sign_cron:
+    name: 签到时间
+    description: Cron表达式，默认每天 11:18 签到
+    default_value: '18 11 * * *'
+env:
+  username: '18573908368'
+  password: cun80o86o0
+  debug: 'true'
+  show_recent_usage: 'true'
+  notify_all_accounts: 'true'
+  timeout: '120'
+env_schema:
+  username:
+    name: 登录账号
+    description: 网上国网App登录手机号（必填）
+  password:
+    name: 登录密码
+    description: 网上国网App登录密码（必填）
+  debug:
+    name: 调试模式
+    description: 开启调试日志
+    options:
+    - 'true'
+    - 'false'
+  show_recent_usage:
+    name: 近期用量
+    description: 显示近期用电用量
+    options:
+    - 'true'
+    - 'false'
+  notify_all_accounts:
+    name: 全部户号
+    description: 通知全部绑定的用电户号
+    options:
+    - 'true'
+    - 'false'
+  timeout:
+    name: 超时时间
+    description: 脚本运行最大超时秒数
+    default_value: '120'
+author: mickeu 适配为Egern版
+icon: https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/83/d8/8a/83d88a92-5a4d-7a2f-118c-80d795e7a9f6/AppIcon-0-0-1x_U007emarketing-0-5-0-0-sRGB-85-220.png/144x144.png
+dns: {}
+scriptings:
+  - schedule:
+      name: 网上国网签到
+      cron: '{{{sign_cron}}}'
+      script_url: https://raw.githubusercontent.com/mickeu/Egern/main/95598.js
+      timeout: 600
+      update_interval: 0
+mitm:
+  hostnames:
+    includes:
+      - api.wsgw-rewrite.com
