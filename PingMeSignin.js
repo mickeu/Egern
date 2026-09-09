@@ -39,6 +39,7 @@ export default async function(ctx) {
     // 每运行一次重新生成一个固定的伪造设备ID，整次运行所有视频都用同一个设备ID
     const fakeDeviceId = genFakeDeviceId();
     console.log(`PingMe 签到本次运行设备ID:${fakeDeviceId}`);
+    let balanceBefore = null;
 
     async function fetchApi(path, useFakeId) {
       const overrideId = useFakeId ? fakeDeviceId : null;
@@ -51,6 +52,7 @@ export default async function(ctx) {
     try {
       const d = await fetchApi('queryBalanceAndBonus');
       if (d.retcode === 0) {
+        balanceBefore = d.result.balance;
         console.log(`💰 运行前余额：${d.result.balance} Coins`);
         notify(`💰 运行前余额：${d.result.balance} Coins`);
       } else {
@@ -104,7 +106,10 @@ export default async function(ctx) {
     try {
       const d = await fetchApi('queryBalanceAndBonus');
       if (d.retcode === 0) {
-        logs.unshift(`💰 最新余额：${d.result.balance} Coins`);
+        const _nb = d.result.balance;
+        const _diff = balanceBefore !== null ? Number((_nb - balanceBefore).toFixed(3)) : null;
+        const _line = `💰 最新余额：${_nb} Coins${_diff !== null ? ` 本次增加${_diff} Coins` : ''}`;
+        logs.unshift(_line);
       }
     } catch (e) {
       // ignore
