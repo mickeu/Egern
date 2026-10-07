@@ -239,8 +239,8 @@ export default async function (ctx) {
   const updateTimeStr = `${P(now.getMonth()+1)}.${P(now.getDate())} ${P(now.getHours())}:${P(now.getMinutes())}`;
   const shortTimeStr = updateTimeStr;
 
+  const backgroundColor = { light: '#FFFFFF', dark: '#000000' };  // 照搬 IBL3ND 写法：widget 根背景（浅色纯白/深色纯黑）
   const C = {
-    bg:        { light: '#FFFFFF', dark: '#000000' },  // 纯白/纯黑背景（借鉴 IBL3ND 白底风格，保留纯黑）
     card:      { light: '#F5F5F7', dark: '#2C2C2E' },  // 浅色下微灰卡片与纯白背景区分，增强层次
     cardBorder:{ light: '#E0E0E0', dark: '#3A3A3C' },  // 卡片描边（IBL3ND 同款），增加立体感
     main:    { light: '#1C1C1E', dark: '#F2F2F7' },
@@ -413,7 +413,7 @@ export default async function (ctx) {
 
   if (fetchError) {
     return {
-      type: "widget", padding: 16, backgroundColor: C.bg,
+      type: "widget", padding: 16, backgroundColor: backgroundColor,
       children: [
         mkRow([mkIcon("fuelpump.circle.fill", C.red, 16), mkSpacer(4), mkText("油价加载失败", 15, "heavy", C.main)], 0),
         mkSpacer(8), mkText(fetchError, 11, "medium", C.muted, { maxLines: 3 })
@@ -424,7 +424,7 @@ export default async function (ctx) {
   if (isSmall) {
     const cardCfg = { radius: 10, padding: [4, 2, 4, 2], labelFz: 10, labelWeight: "bold", valFz: 14, innerGap: 1, deltaFz: 9, deltaGap: 1 };
     return {
-      type: "widget", padding: [12, 12, 8, 12], url: BASE, backgroundColor: C.bg,
+      type: "widget", padding: [12, 12, 8, 12], url: BASE, backgroundColor: backgroundColor,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
@@ -453,7 +453,7 @@ export default async function (ctx) {
     const infoColor = nextAdjust.isUrgent ? C.red : C.gold;
 
     return {
-      type: "widget", padding: [16, 16, 14, 16], url: BASE, backgroundColor: C.bg,
+      type: "widget", padding: [16, 16, 14, 16], url: BASE, backgroundColor: backgroundColor,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 17), mkSpacer(4),
@@ -485,7 +485,7 @@ export default async function (ctx) {
   const infoColorMed = nextAdjust.isUrgent ? C.red : C.gold;
 
   return {
-    type: "widget", padding: [10, 12, 6, 12], url: BASE, backgroundColor: C.bg,
+    type: "widget", padding: [10, 12, 6, 12], url: BASE, backgroundColor: backgroundColor,
     children: [
       mkRow([
         mkIcon("fuelpump.circle.fill", C.main, 16), mkSpacer(2),
