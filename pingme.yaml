@@ -34,7 +34,7 @@ dns: {}
 rules:
 - domain:
     match: api.pingmeapp.net
-    policy: PROXY
+    policy: '{{{PROXY}}}'
 scriptings:
 - schedule:
     name: PingMe签到
