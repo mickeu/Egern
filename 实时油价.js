@@ -409,11 +409,11 @@ export default async function (ctx) {
     };
   };
 
-  const backgroundGradient = { type: 'linear', colors: [C.bg, C.bg], startPoint: { x: 0, y: 0 }, endPoint: { x: 1, y: 1 } };  // 两端同色=纯色，用原版backgroundGradient字段确保覆盖默认背景
+  // 背景改用 backgroundColor 字段（IBL3ND 同款实现），避免渐变技巧残留阴影
 
   if (fetchError) {
     return {
-      type: "widget", padding: 16, backgroundGradient,
+      type: "widget", padding: 16, backgroundColor: C.bg,
       children: [
         mkRow([mkIcon("fuelpump.circle.fill", C.red, 16), mkSpacer(4), mkText("油价加载失败", 15, "heavy", C.main)], 0),
         mkSpacer(8), mkText(fetchError, 11, "medium", C.muted, { maxLines: 3 })
@@ -424,7 +424,7 @@ export default async function (ctx) {
   if (isSmall) {
     const cardCfg = { radius: 10, padding: [4, 2, 4, 2], labelFz: 10, labelWeight: "bold", valFz: 14, innerGap: 1, deltaFz: 9, deltaGap: 1 };
     return {
-      type: "widget", padding: [12, 12, 8, 12], url: BASE, backgroundGradient,
+      type: "widget", padding: [12, 12, 8, 12], url: BASE, backgroundColor: C.bg,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
@@ -453,7 +453,7 @@ export default async function (ctx) {
     const infoColor = nextAdjust.isUrgent ? C.red : C.gold;
 
     return {
-      type: "widget", padding: [16, 16, 14, 16], url: BASE, backgroundGradient,
+      type: "widget", padding: [16, 16, 14, 16], url: BASE, backgroundColor: C.bg,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 17), mkSpacer(4),
@@ -485,7 +485,7 @@ export default async function (ctx) {
   const infoColorMed = nextAdjust.isUrgent ? C.red : C.gold;
 
   return {
-    type: "widget", padding: [10, 12, 6, 12], url: BASE, backgroundGradient,
+    type: "widget", padding: [10, 12, 6, 12], url: BASE, backgroundColor: C.bg,
     children: [
       mkRow([
         mkIcon("fuelpump.circle.fill", C.main, 16), mkSpacer(2),
