@@ -424,22 +424,9 @@ export default async function (ctx) {
   if (isSmall) {
     const cardCfg = { radius: 10, padding: [4, 2, 4, 2], labelFz: 10, labelWeight: "bold", valFz: 14, innerGap: 1, deltaFz: 9, deltaGap: 1 };
     return {
-      type: "widget", padding: [12, 12, 8, 12], backgroundColor: backgroundColor,
+      type: "widget", padding: 0, backgroundColor: backgroundColor,
       children: [
-        mkRow([
-          mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
-          mkText(`${regionName}油价`, 13, "heavy", C.main),
-          mkSpacer(), 
-          mkIcon("arrow.triangle.2.circlepath", C.muted, 9), mkSpacer(2),
-          mkText(shortTimeStr, 9, "bold", C.muted, { family: "Menlo" })
-        ], 0),
-        mkSpacer(7),
-        { type: "stack", direction: "column", gap: 8, flex: 1, children: [
-          mkRow(PRICE_ITEMS.slice(0, 2).map(item => buildPriceCard(item, cardCfg)), 6, { flex: 1 }),
-          mkRow(PRICE_ITEMS.slice(2, 4).map(item => buildPriceCard(item, cardCfg)), 6, { flex: 1 })
-        ]},
-        mkSpacer(7),
-        mkRow([ mkSpacer(), mkIcon("clock.fill", nextAdjust.isUrgent ? C.red : C.muted, 9), mkSpacer(3), mkText(`下轮调价: ${nextAdjust.dateStr}`, 9, "bold", nextAdjust.isUrgent ? C.red : C.muted) ], 0)
+        { type: "text", text: "阴影诊断", font: { size: 20, weight: "bold" }, textColor: C.main, textAlign: "center" }
       ]
     };
   }
