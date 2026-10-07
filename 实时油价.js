@@ -240,8 +240,9 @@ export default async function (ctx) {
   const shortTimeStr = updateTimeStr;
 
   const C = {
-    bg:      { light: '#F2F2F7', dark: '#000000' },  // 数据中心(DCH)同款纯色背景
-    card:    { light: '#FFFFFF', dark: '#2C2C2E' },
+    bg:        { light: '#FFFFFF', dark: '#000000' },  // 纯白/纯黑背景（借鉴 IBL3ND 白底风格，保留纯黑）
+    card:      { light: '#F5F5F7', dark: '#2C2C2E' },  // 浅色下微灰卡片与纯白背景区分，增强层次
+    cardBorder:{ light: '#E0E0E0', dark: '#3A3A3C' },  // 卡片描边（IBL3ND 同款），增加立体感
     main:    { light: '#1C1C1E', dark: '#F2F2F7' },
     muted:   { light: '#8E8E93', dark: '#636366' },
     gold:    { light: '#B07C1A', dark: '#D4A02A' },
@@ -391,6 +392,7 @@ export default async function (ctx) {
     return {
       type: "stack", direction: "column", alignItems: "center", flex: 1,
       backgroundColor: C.card, borderRadius: config.radius, padding: config.padding,
+      borderWidth: 0.5, borderColor: C.cardBorder,   // IBL3ND 同款描边，立体感
       children: [
         mkSpacer(),
         mkText(item.label, config.labelFz, config.labelWeight, item.color),
