@@ -52,6 +52,11 @@ export default async function(ctx) {
     if (extraOpts) Object.assign(opts, extraOpts);
     return await ctx.http.get(url, opts);
   }
+  function po(timeout) {
+    const o = { timeout };
+    if (policy && policy !== "DIRECT") o.policy = policy;
+    return o;
+  }
   function jp(s) { try { return JSON.parse(s); } catch (e) { return null; } }
   function ti(v) { const n = Number(v); return Number.isFinite(n) ? Math.round(n) : null; }
 
@@ -184,7 +189,7 @@ export default async function(ctx) {
   let riskIPPureTxt = "低危 (0)", riskIPPureCol = C_GREEN, ippSev = 0;
 
   try {
-    const res = await ctx.http.get('https://my.ippure.com/v1/info', { timeout: 4000 });
+    const res = await ctx.http.get('https://my.ippure.com/v1/info', po(4000));
     const d = JSON.parse(await res.text());
     nIp = d.ip || "获取失败";
     let code = d.countryCode || "";
@@ -203,10 +208,10 @@ export default async function(ctx) {
 
   let riskIpapiTxt = "低危 (0%)", riskIpapiCol = C_GREEN, apiSev = 0;
   try {
-    const ipRes = await ctx.http.get('http://ip-api.com/json/?lang=zh-CN', { timeout: 3000 });
+    const ipRes = await ctx.http.get('http://ip-api.com/json/?lang=zh-CN', po(3000));
     const ipData = JSON.parse(await ipRes.text());
     if (ipData.query) {
-      const apiRes = await ctx.http.get(`https://api.ipapi.is/?q=${ipData.query}`, { timeout: 4000 });
+      const apiRes = await ctx.http.get(`https://api.ipapi.is/?q=${ipData.query}`, po(4000));
       const j = JSON.parse(await apiRes.text());
       if (j && j.company && j.company.abuser_score) {
         const m = String(j.company.abuser_score).match(/([0-9.]+)\s*\(([^)]+)\)/);
