@@ -18,7 +18,7 @@
  * AREA_INDEX   — 多区域特殊索引 (数字，可选)
  * OFFSET_SCALE — 涨跌幅系数缩放 (默认: 1)
  * * 🔗 链接引用 https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/GasPrice.js
- * * ⏱️ 更新时间 2026.10.08 09:24
+ * * ⏱️ 更新时间 2026.10.08 09:26
  * ==========================================
  */
 
@@ -221,8 +221,8 @@ function extractItems(current, history, province, areaIndex, targetKeys, offsetS
 
 export default async function (ctx) {
   const env = ctx.env || {};
-  const provinceCode = normalizeProvince(getEnv(env, ['PROVINCE', 'PROVINCE_ID', 'province'], '51'));
-  const cityName = getEnv(env, ['CITY', 'city'], '成都');
+  const provinceCode = normalizeProvince(getEnv(env, ['PROVINCE', 'PROVINCE_ID', 'province'], '43'));
+  const cityName = getEnv(env, ['CITY', 'city'], '长沙');
   const explicitArea = (() => {
     const raw = getEnv(env, ['AREA', 'AREA_INDEX', 'area'], '');
     return raw === '' ? null : toNumber(raw, null);
