@@ -18,7 +18,7 @@
  * AREA_INDEX   — 多区域特殊索引 (数字，可选)
  * OFFSET_SCALE — 涨跌幅系数缩放 (默认: 1)
  * * 🔗 链接引用 https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/GasPrice.js
- * * ⏱️ 更新时间 2026.10.08 08:32
+ * * ⏱️ 更新时间 2026.10.08 08:37
  * ==========================================
  */
 
@@ -286,6 +286,25 @@ export default async function (ctx) {
   let hasTrendData = false; 
   let fetchError = null;
 
+  // 缓存（借鉴 IBL3ND）：fetch 前先读缓存，失败时降级用缓存数据
+  const CACHE_KEY = `oil_${provinceCode}_${cityName || 'default'}`;
+  let hasCache = false;
+  try {
+    const cached = ctx.storage.getJSON(CACHE_KEY);
+    if (cached && cached.prices) {
+      prices.p92 = cached.prices.p92 ?? null;
+      prices.p95 = cached.prices.p95 ?? null;
+      prices.p98 = cached.prices.p98 ?? null;
+      prices.diesel = cached.prices.diesel ?? null;
+      if (cached.items) { items.p92 = cached.items.p92 || null; items.p95 = cached.items.p95 || null; items.p98 = cached.items.p98 || null; items.diesel = cached.items.diesel || null; }
+      regionName = cached.regionName || regionName;
+      trendInfo = cached.trendInfo || "";
+      trendColor = cached.trendColor || trendColor;
+      hasTrendData = cached.hasTrendData || false;
+      hasCache = true;
+    }
+  } catch (_) {}
+
   try {
     const { current, history } = await loadData(ctx, provinceCode);
     const areaIndex = resolveAreaIndex(current, cityName, explicitArea);
@@ -348,8 +367,11 @@ export default async function (ctx) {
         trendLabel = "较上次调整: ";
       }
     }
+
+    // 缓存写入（借鉴 IBL3ND）
+    try { ctx.storage.setJSON(CACHE_KEY, { prices, items, regionName, trendInfo, trendColor, hasTrendData }); } catch (_) {}
   } catch (e) {
-    fetchError = e && e.message ? e.message : String(e);
+    if (hasCache) { fetchError = null; } else { fetchError = e && e.message ? e.message : String(e); }
   }
 
   const PRICE_ITEMS = [
