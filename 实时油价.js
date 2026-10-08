@@ -424,7 +424,7 @@ export default async function (ctx) {
   if (isSmall) {
     const cardCfg = { radius: 10, padding: [4, 2, 4, 2], labelFz: 10, labelWeight: "bold", valFz: 14, innerGap: 1, deltaFz: 9, deltaGap: 1 };
     return {
-      type: "widget", padding: [12, 12, 8, 12], url: BASE, backgroundColor: backgroundColor,
+      type: "widget", padding: [12, 12, 8, 12], backgroundColor: backgroundColor,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
@@ -453,7 +453,7 @@ export default async function (ctx) {
     const infoColor = nextAdjust.isUrgent ? C.red : C.gold;
 
     return {
-      type: "widget", padding: [16, 16, 14, 16], url: BASE, backgroundColor: backgroundColor,
+      type: "widget", padding: [16, 16, 14, 16], backgroundColor: backgroundColor,
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 17), mkSpacer(4),
@@ -485,7 +485,7 @@ export default async function (ctx) {
   const infoColorMed = nextAdjust.isUrgent ? C.red : C.gold;
 
   return {
-    type: "widget", padding: [10, 12, 6, 12], url: BASE, backgroundColor: backgroundColor,
+    type: "widget", padding: [10, 12, 6, 12], backgroundColor: backgroundColor,
     children: [
       mkRow([
         mkIcon("fuelpump.circle.fill", C.main, 16), mkSpacer(2),
