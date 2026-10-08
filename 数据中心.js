@@ -406,7 +406,7 @@ export default async function(ctx) {
         alignItems: 'center',
         gap: HEADER_GAP,
         children: [
-          { type: 'text', text: '数据中心(DCH)', font: { size: HEADER_FONT, weight: 'heavy' }, textColor: C_TITLE, flex: 1 },
+          { type: 'text', text: `数据中心${policy ? '⟨'+policy+'⟩' : '(无POLICY)'}`, font: { size: HEADER_FONT, weight: 'heavy' }, textColor: C_TITLE, flex: 1 },
           { type: 'image', src: `sf-symbol:${summaryIcon}`, color: summaryCol, width: 12, height: 12 },
           { type: 'text', text: summaryTxt, font: { size: 10, weight: 'bold' }, textColor: summaryCol },
           { type: 'spacer' },
