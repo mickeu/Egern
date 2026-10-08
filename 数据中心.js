@@ -1,5 +1,6 @@
 /**
  * 网络状态小组件 — 流媒体解锁检测 + IP 风险评估
+ * 修改时间: 2026.10.08 18:45
  * 
  * 📦 环境变量（在 Egern profile.yaml 中设置）：
  *   POLICY - 指定策略组，如 "自动选择"、"香港节点"
@@ -411,7 +412,7 @@ export default async function(ctx) {
         alignItems: 'center',
         gap: HEADER_GAP,
         children: [
-          { type: 'text', text: `数据中心⟨${policy||'空'}⟩·18:34`, font: { size: HEADER_FONT, weight: 'heavy' }, textColor: C_TITLE, flex: 1 },
+          { type: 'text', text: '数据中心(DCH)', font: { size: HEADER_FONT, weight: 'heavy' }, textColor: C_TITLE, flex: 1 },
           { type: 'image', src: `sf-symbol:${summaryIcon}`, color: summaryCol, width: 12, height: 12 },
           { type: 'text', text: summaryTxt, font: { size: 10, weight: 'bold' }, textColor: summaryCol },
           { type: 'spacer' },
