@@ -18,7 +18,7 @@
  * AREA_INDEX   — 多区域特殊索引 (数字，可选)
  * OFFSET_SCALE — 涨跌幅系数缩放 (默认: 1)
  * * 🔗 链接引用 https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/GasPrice.js
- * * ⏱️ 更新时间 2026.10.08 08:37
+ * * ⏱️ 更新时间 2026.10.08 09:00
  * ==========================================
  */
 
@@ -246,6 +246,7 @@ export default async function (ctx) {
     main:    { light: '#1C1C1E', dark: '#F2F2F7' },
     muted:   { light: '#8E8E93', dark: '#636366' },
     gold:    { light: '#B07C1A', dark: '#D4A02A' },
+    p92:     { light: '#FF9F0A', dark: '#FFB347' },  // IBL3ND 同款 92号橙，加油站图标用
     red:     { light: '#C0392B', dark: '#FF453A' },
     teal:    { light: '#1E7E44', dark: '#30D158' },
     blue:    { light: '#2C5F8A', dark: '#5E9ED6' },
@@ -449,7 +450,7 @@ export default async function (ctx) {
       type: "widget", padding: [12, 12, 8, 12], backgroundColor: backgroundColor,
       children: [
         mkRow([
-          mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
+          mkIcon("fuelpump.circle.fill", C.p92, 13), mkSpacer(4), 
           mkText(`${regionName}油价`, 13, "heavy", C.main),
           mkSpacer(), 
           mkIcon("arrow.triangle.2.circlepath", C.muted, 9), mkSpacer(2),
@@ -478,7 +479,7 @@ export default async function (ctx) {
       type: "widget", padding: [16, 16, 14, 16], backgroundColor: backgroundColor,
       children: [
         mkRow([
-          mkIcon("fuelpump.circle.fill", C.main, 17), mkSpacer(4),
+          mkIcon("fuelpump.circle.fill", C.p92, 17), mkSpacer(4),
           mkText(`${regionName}油价`, 16, "heavy", C.main), mkSpacer(),
           mkText("下轮调价: ", 12, "medium", infoColor),
           mkText(nextAdjust.dateStr, 12, "bold", infoColor),
@@ -510,7 +511,7 @@ export default async function (ctx) {
     type: "widget", padding: [10, 12, 6, 12], backgroundColor: backgroundColor,
     children: [
       mkRow([
-        mkIcon("fuelpump.circle.fill", C.main, 16), mkSpacer(2),
+        mkIcon("fuelpump.circle.fill", C.p92, 16), mkSpacer(2),
         mkText(`${regionName}油价`, 15, "heavy", C.main), mkSpacer(),
         mkText("下轮调价: ", 11, "medium", infoColorMed),
         mkText(nextAdjust.dateStr, 11, "bold", infoColorMed),
