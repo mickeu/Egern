@@ -18,7 +18,7 @@
  * AREA_INDEX   — 多区域特殊索引 (数字，可选)
  * OFFSET_SCALE — 涨跌幅系数缩放 (默认: 1)
  * * 🔗 链接引用 https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/GasPrice.js
- * * ⏱️ 更新时间 2026.10.08 07:59
+ * * ⏱️ 更新时间 2026.10.08 08:32
  * ==========================================
  */
 
@@ -428,7 +428,7 @@ export default async function (ctx) {
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 13), mkSpacer(4), 
-          mkText(`${regionName}油价 v2`, 13, "heavy", C.main),
+          mkText(`${regionName}油价`, 13, "heavy", C.main),
           mkSpacer(), 
           mkIcon("arrow.triangle.2.circlepath", C.muted, 9), mkSpacer(2),
           mkText(shortTimeStr, 9, "bold", C.muted, { family: "Menlo" })
@@ -457,7 +457,7 @@ export default async function (ctx) {
       children: [
         mkRow([
           mkIcon("fuelpump.circle.fill", C.main, 17), mkSpacer(4),
-          mkText(`${regionName}油价 v2`, 16, "heavy", C.main), mkSpacer(),
+          mkText(`${regionName}油价`, 16, "heavy", C.main), mkSpacer(),
           mkText("下轮调价: ", 12, "medium", infoColor),
           mkText(nextAdjust.dateStr, 12, "bold", infoColor),
           mkText(` ${nextAdjust.countdown}`, 12, "bold", infoColor)
@@ -489,7 +489,7 @@ export default async function (ctx) {
     children: [
       mkRow([
         mkIcon("fuelpump.circle.fill", C.main, 16), mkSpacer(2),
-        mkText(`${regionName}油价 v2`, 15, "heavy", C.main), mkSpacer(),
+        mkText(`${regionName}油价`, 15, "heavy", C.main), mkSpacer(),
         mkText("下轮调价: ", 11, "medium", infoColorMed),
         mkText(nextAdjust.dateStr, 11, "bold", infoColorMed),
         mkText(` ${nextAdjust.countdown}`, 11, "bold", infoColorMed)
