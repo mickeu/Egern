@@ -18,7 +18,7 @@
  * AREA_INDEX   — 多区域特殊索引 (数字，可选)
  * OFFSET_SCALE — 涨跌幅系数缩放 (默认: 1)
  * * 🔗 链接引用 https://raw.githubusercontent.com/jnlaoshu/MySelf/master/Egern/Widget/GasPrice.js
- * * ⏱️ 更新时间 2026.10.08 07:30
+ * * ⏱️ 更新时间 2026.10.08 07:59
  * ==========================================
  */
 
